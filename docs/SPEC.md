@@ -2,7 +2,8 @@
 tags: [project, market-data, trading, tinkoff]
 created: 2026-10-25
 status: brainstorm-approved
-workspace: /opt/data/workspace/MarketData
+workspace: /opt/data/workspace/MarketDataGrabber
+github: https://github.com/WhoKnowsWhoCares/MarketDataGrabber
 ---
 # MarketData — Спецификация проекта
 
@@ -220,5 +221,8 @@ profile live (P6):
 
 ## Связанное
 
-- Рабочий каталог: `/opt/data/workspace/MarketData`
+- Рабочий каталог: `/opt/data/workspace/MarketDataGrabber`
+- GitHub: https://github.com/WhoKnowsWhoCares/MarketDataGrabber (ветка `master`)
+- Копия спеки в репо: `docs/SPEC.md` — **каноничный экземпляр теперь в репо**, эта заметка — рабочая копия; при изменениях синхронизировать
 - Документация API: developer.tbank.ru/invest (портал), github.com/RussianInvestments/investAPI (доки+proto)
+- Секреты: `/opt/data/workspace/MarketDataGrabber/.env` (создаётся из `.env.example`; токены также лежат в глобальном `/opt/data/.env` для сервисов Hermes)
