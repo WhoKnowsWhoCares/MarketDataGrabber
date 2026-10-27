@@ -2,7 +2,7 @@
 tags: [project, market-data, trading, tinkoff]
 created: 2026-10-25
 status: brainstorm-approved
-workspace: /opt/data/workspace/MarketDataGrabber
+workspace: /opt/data/workspace/MarketData
 github: https://github.com/WhoKnowsWhoCares/MarketDataGrabber
 ---
 # MarketData — Спецификация проекта
@@ -191,6 +191,17 @@ profile live (P6):
 
 ## Key Assumptions to Validate
 
+### Проверено живыми тестами (2026-10-27)
+
+- [x] Read-токен валиден: GetAccounts → 1 счёт (READ_ONLY), GetCandles (60 минуток SBER), InstrumentsService (акции/564 фьючерса), цены в формате units+nano
+- [x] `/history-data` работает **только с параметром `figi`** (с `instrument_id`/uid → HTTP 400); SBER 2024 = ZIP 3.4 MB минуток
+- [x] Telegram: `api.telegram.org` напрямую недоступен (TCP timeout) — работает только через SOCKS-прокси `socks5h://172.21.0.1:10808` (docker-шлюз); бот @Trade4MeAIBot, getMe ok
+- [x] TLS на хосте перехватывается MITM-прокси → все HTTP-клиенты с `TLS_VERIFY=false` (переменная в .env)
+- [ ] `ADMIN_CHAT_ID`: sendMessage → «chat not found» — владельцу нужно написать боту @Trade4MeAIBot `/start`
+- [ ] ClickHouse/Grafana пароли заданы в .env — проверка при старте контейнеров (P0)
+
+### Прочие допущения
+
 - [ ] Токен read-only будет получен; лимиты тарифа достаточны для пилота — тест на P0
 - [ ] Минутные архивы `/history-data` доступны по фьючерсам (глубина по сериям контрактов?) — тест на P1
 - [ ] SDK `tinkoff-investments` работает на Python 3.14, иначе raw gRPC — тест на P0
@@ -221,8 +232,8 @@ profile live (P6):
 
 ## Связанное
 
-- Рабочий каталог: `/opt/data/workspace/MarketDataGrabber`
+- Рабочий каталог: `/opt/data/workspace/MarketData`
 - GitHub: https://github.com/WhoKnowsWhoCares/MarketDataGrabber (ветка `master`)
 - Копия спеки в репо: `docs/SPEC.md` — **каноничный экземпляр теперь в репо**, эта заметка — рабочая копия; при изменениях синхронизировать
 - Документация API: developer.tbank.ru/invest (портал), github.com/RussianInvestments/investAPI (доки+proto)
-- Секреты: `/opt/data/workspace/MarketDataGrabber/.env` (создаётся из `.env.example`; токены также лежат в глобальном `/opt/data/.env` для сервисов Hermes)
+- Секреты: `/opt/data/workspace/MarketData/.env` (создаётся из `.env.example`; токены также лежат в глобальном `/opt/data/.env` для сервисов Hermes)
