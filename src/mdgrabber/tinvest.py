@@ -107,6 +107,28 @@ class TInvestClient:
     def futures_all(self) -> list[dict]:
         return self._post(f"{PREFIX}.InstrumentsService/Futures", {}).get("instruments", [])
 
+    def get_trading_schedules(self, from_iso: str | None = None, to_iso: str | None = None) -> list[dict]:
+        """Расписания площадок: [{exchange, days: [...]}]. Дни — camelCase:
+        date, isTradingDay, startTime/endTime, intervals. Ограничение API:
+        период from..to не длиннее 14 дней (или {} — ближайшие ~15 дней)."""
+        payload: dict = {}
+        if from_iso and to_iso:
+            payload = {"from": from_iso, "to": to_iso}
+        return self._post(f"{PREFIX}.InstrumentsService/TradingSchedules", payload).get(
+            "exchanges", []
+        )
+
+    def get_dividends(self, uid: str, from_iso: str, to_iso: str) -> list[dict]:
+        return self._post(
+            f"{PREFIX}.InstrumentsService/GetDividends",
+            {"instrument_id": uid, "from": from_iso, "to": to_iso},
+        ).get("dividends", [])
+
+    def get_asset_reports(self, uid: str) -> list[dict]:
+        return self._post(
+            f"{PREFIX}.InstrumentsService/GetAssetReports", {"instrument_id": uid}
+        ).get("events", [])
+
     def get_fundamentals(self, asset_uids: list[str]) -> dict:
         return self._post(f"{PREFIX}.InstrumentsService/GetAssetFundamentals", {"assets": asset_uids})
 
