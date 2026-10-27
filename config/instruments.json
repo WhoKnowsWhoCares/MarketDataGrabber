@@ -3,13 +3,15 @@
     "type": "share",
     "uid": "e6123145-9665-43e0-8413-cd61b8aa9b13",
     "figi": "BBG004730N88",
-    "class_code": "TQBR"
+    "class_code": "TQBR",
+    "asset_uid": "40d89385-a03a-4659-bf4e-d3ecba011782"
   },
   "GAZP": {
     "type": "share",
     "uid": "962e2a95-02a9-4171-abd7-aa198dbe643a",
     "figi": "BBG004730RP0",
-    "class_code": "TQBR"
+    "class_code": "TQBR",
+    "asset_uid": "bfc8184d-9562-4ea2-87dd-be6e76dc1279"
   },
   "CNYRUBF": {
     "type": "future",

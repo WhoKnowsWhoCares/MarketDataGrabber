@@ -110,6 +110,22 @@ class TInvestClient:
     def get_fundamentals(self, asset_uids: list[str]) -> dict:
         return self._post(f"{PREFIX}.InstrumentsService/GetAssetFundamentals", {"assets": asset_uids})
 
+    def get_assets(self) -> list[dict]:
+        """Все активы (у каждого — instruments[] с instrument uid)."""
+        return self._post(f"{PREFIX}.InstrumentsService/GetAssets", {}).get("assets", [])
+
+    def get_asset_by(self, instrument_uid: str) -> dict:
+        """instrument_uid → asset. ВНИМАНИЕ: asset.uid может отличаться от instrument_uid.
+        Замечено: для части акций REST-GetAssetBy отвечает 404 «Asset not found»,
+        хотя актив есть в GetAssets — вызывающий код должен уметь фолбэк."""
+        return self._post(
+            f"{PREFIX}.InstrumentsService/GetAssetBy",
+            {"id_type": "INSTRUMENT_ID_TYPE_INSTRUMENT_ID", "id": instrument_uid},
+        ).get("asset", {})
+
+    def get_consensus_forecasts(self) -> dict:
+        return self._post(f"{PREFIX}.InstrumentsService/GetConsensusForecasts", {})
+
     def history_zip(self, figi: str, year: int) -> bytes:
         """Годовой ZIP минутных свечей. ВАЖНО: параметр именно figi (uid даёт 400)."""
         with httpx.Client(timeout=120.0, verify=self._verify) as http:
