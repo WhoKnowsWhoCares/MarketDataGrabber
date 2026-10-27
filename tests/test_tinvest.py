@@ -140,3 +140,39 @@ def test_parse_history_zip_comma_with_header(monkeypatch, tmp_path):
     rows = c.parse_history_zip(buf.getvalue())
     assert rows == [{"uid": "X", "utc": "2024-01-03T09:59:00Z", "open": 290.0,
                      "close": 291.0, "high": 292.0, "low": 289.0, "volume": 100}]
+
+
+def test_get_asset_by_parses(monkeypatch, tmp_path):
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path.endswith(".InstrumentsService/GetAssetBy")
+        assert b"INSTRUMENT_ID_TYPE_INSTRUMENT_ID" in request.content
+        return httpx.Response(200, text=json.dumps(
+            {"asset": {"uid": "asset-uid-1", "type": "ASSET_TYPE_SHARE"}}
+        ))
+
+    c = client_with(handler, monkeypatch, tmp_path)
+    asset = c.get_asset_by("instrument-uid-1")
+    assert asset["uid"] == "asset-uid-1"
+
+
+def test_get_fundamentals_and_consensus(monkeypatch, tmp_path):
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request.url.path.rsplit(".", 1)[-1])
+        if calls[-1] == "InstrumentsService/GetAssetFundamentals":
+            assert json.loads(request.content) == {"assets": ["asset-uid-1"]}
+            return httpx.Response(200, text=json.dumps(
+                {"fundamentals": [{"asset_uid": "asset-uid-1", "pe_ratio_ttm": 2.5}]}
+            ))
+        assert calls[-1] == "InstrumentsService/GetConsensusForecasts"
+        return httpx.Response(200, text=json.dumps({"items": []}))
+
+    c = client_with(handler, monkeypatch, tmp_path)
+    resp = c.get_fundamentals(["asset-uid-1"])
+    assert resp["fundamentals"][0]["pe_ratio_ttm"] == 2.5
+    assert c.get_consensus_forecasts() == {"items": []}
+    assert calls == [
+        "InstrumentsService/GetAssetFundamentals",
+        "InstrumentsService/GetConsensusForecasts",
+    ]
