@@ -1,0 +1,32 @@
+{
+  "SBER": {
+    "type": "share",
+    "uid": "e6123145-9665-43e0-8413-cd61b8aa9b13",
+    "figi": "BBG004730N88",
+    "class_code": "TQBR"
+  },
+  "GAZP": {
+    "type": "share",
+    "uid": "962e2a95-02a9-4171-abd7-aa198dbe643a",
+    "figi": "BBG004730RP0",
+    "class_code": "TQBR"
+  },
+  "CNYRUBF": {
+    "type": "future",
+    "uid": "c300543d-aa18-4249-b110-615409dde036",
+    "figi": "FUTCNYRUBF00",
+    "class_code": "SPBFUT"
+  },
+  "IMOEXF": {
+    "type": "future",
+    "uid": "5bcff194-f10d-4314-b9ee-56b7fdb344fd",
+    "figi": "FUTIMOEXF000",
+    "class_code": "SPBFUT"
+  },
+  "IBZ6": {
+    "type": "future",
+    "uid": "14d97146-1f46-435b-984f-3d4594a5183c",
+    "figi": "FIBIT1226000",
+    "class_code": "SPBFUT"
+  }
+}
