@@ -342,7 +342,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT argMax(close, bar_date) AS value, instrument_uid AS metric FROM market_data_gold.mart_daily_metrics GROUP BY instrument_uid",
+          "rawSql": "SELECT argMax(close, bar_date) AS value FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = multiIf('${instrument}'='GAZP','962e2a95-02a9-4171-abd7-aa198dbe643a','${instrument}'='CNYRUBF','c300543d-aa18-4249-b110-615409dde036','${instrument}'='IMOEXF','5bcff194-f10d-4314-b9ee-56b7fdb344fd','${instrument}'='IBZ6','14d97146-1f46-435b-984f-3d4594a5183c','e6123145-9665-43e0-8413-cd61b8aa9b13')",
           "refId": "A",
           "meta": {}
         },
@@ -353,7 +353,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT argMax(ret_1d, bar_date) AS value, 'ret_1d' AS metric FROM market_data_gold.mart_daily_metrics ",
+          "rawSql": "SELECT argMax(ret_1d, bar_date) AS value FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = multiIf('${instrument}'='GAZP','962e2a95-02a9-4171-abd7-aa198dbe643a','${instrument}'='CNYRUBF','c300543d-aa18-4249-b110-615409dde036','${instrument}'='IMOEXF','5bcff194-f10d-4314-b9ee-56b7fdb344fd','${instrument}'='IBZ6','14d97146-1f46-435b-984f-3d4594a5183c','e6123145-9665-43e0-8413-cd61b8aa9b13')",
           "refId": "B",
           "meta": {}
         },
@@ -364,7 +364,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT argMax(rsi14, bar_date) AS value, 'rsi14' AS metric FROM market_data_gold.mart_daily_metrics ",
+          "rawSql": "SELECT argMax(rsi14, bar_date) AS value FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = multiIf('${instrument}'='GAZP','962e2a95-02a9-4171-abd7-aa198dbe643a','${instrument}'='CNYRUBF','c300543d-aa18-4249-b110-615409dde036','${instrument}'='IMOEXF','5bcff194-f10d-4314-b9ee-56b7fdb344fd','${instrument}'='IBZ6','14d97146-1f46-435b-984f-3d4594a5183c','e6123145-9665-43e0-8413-cd61b8aa9b13')",
           "refId": "C",
           "meta": {}
         }
@@ -1006,7 +1006,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT event_type, instrument_uid, expected_date FROM market_data.events FINAL WHERE expected_date >= today() ORDER BY expected_date, event_type",
+          "rawSql": "SELECT event_type, multiIf(instrument_uid='e6123145-9665-43e0-8413-cd61b8aa9b13','SBER',instrument_uid='962e2a95-02a9-4171-abd7-aa198dbe643a','GAZP',instrument_uid='c300543d-aa18-4249-b110-615409dde036','CNYRUBF',instrument_uid='5bcff194-f10d-4314-b9ee-56b7fdb344fd','IMOEXF',instrument_uid='14d97146-1f46-435b-984f-3d4594a5183c','IBZ6',instrument_uid) AS instrument, expected_date FROM market_data.events FINAL WHERE expected_date >= today() AND event_type != 'trading_day' ORDER BY expected_date, event_type",
           "refId": "A"
         }
       ],
@@ -1076,7 +1076,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT asset_uid AS metric, JSONExtractFloat(payload, 'peRatioTtm') AS value FROM (SELECT asset_uid, argMax(payload, snapshot_ts) AS payload FROM market_data.fundamentals_snapshots GROUP BY asset_uid) ORDER BY asset_uid",
+          "rawSql": "SELECT multiIf(asset_uid='40d89385-a03a-4659-bf4e-d3ecba011782','SBER',asset_uid='bfc8184d-9562-4ea2-87dd-be6e76dc1279','GAZP',asset_uid) AS metric, JSONExtractFloat(payload, 'peRatioTtm') AS value FROM (SELECT asset_uid, argMax(payload, snapshot_ts) AS payload FROM market_data.fundamentals_snapshots GROUP BY asset_uid) ORDER BY asset_uid",
           "refId": "A"
         }
       ],
@@ -1138,7 +1138,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT asset_uid AS metric, JSONExtractFloat(payload, 'priceToBookTtm') AS value FROM (SELECT asset_uid, argMax(payload, snapshot_ts) AS payload FROM market_data.fundamentals_snapshots GROUP BY asset_uid) ORDER BY asset_uid",
+          "rawSql": "SELECT multiIf(asset_uid='40d89385-a03a-4659-bf4e-d3ecba011782','SBER',asset_uid='bfc8184d-9562-4ea2-87dd-be6e76dc1279','GAZP',asset_uid) AS metric, JSONExtractFloat(payload, 'priceToBookTtm') AS value FROM (SELECT asset_uid, argMax(payload, snapshot_ts) AS payload FROM market_data.fundamentals_snapshots GROUP BY asset_uid) ORDER BY asset_uid",
           "refId": "A"
         }
       ],
@@ -1200,7 +1200,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT asset_uid AS metric, JSONExtractFloat(payload, 'forwardAnnualDividendYield') AS value FROM (SELECT asset_uid, argMax(payload, snapshot_ts) AS payload FROM market_data.fundamentals_snapshots GROUP BY asset_uid) ORDER BY asset_uid",
+          "rawSql": "SELECT multiIf(asset_uid='40d89385-a03a-4659-bf4e-d3ecba011782','SBER',asset_uid='bfc8184d-9562-4ea2-87dd-be6e76dc1279','GAZP',asset_uid) AS metric, JSONExtractFloat(payload, 'forwardAnnualDividendYield') AS value FROM (SELECT asset_uid, argMax(payload, snapshot_ts) AS payload FROM market_data.fundamentals_snapshots GROUP BY asset_uid) ORDER BY asset_uid",
           "refId": "A"
         }
       ],
