@@ -30,6 +30,370 @@
       "fieldConfig": {
         "defaults": {
           "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 93600
+              }
+            ]
+          },
+          "unit": "dtdurationms"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT now() - max(bar_time) AS age_ms FROM market_data_gold.candles_1m",
+          "refId": "A"
+        }
+      ],
+      "title": "Свежесть данных (candles_1m)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-mdg"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT gap_vs_calendar FROM market_data_gold.dq_metrics ORDER BY collected_at DESC LIMIT 1",
+          "refId": "A"
+        }
+      ],
+      "title": "DQ проверки (gap_vs_calendar)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-mdg"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "dateTimeAsSystem"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT max(bar_date) AS bar_date FROM market_data_gold.mart_daily_metrics",
+          "refId": "A"
+        }
+      ],
+      "title": "Витрины обновлены (mart)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-mdg"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "lineWidth": 1
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyRUB"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ret_1d"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "green",
+                      "value": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 10
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {"fill": "solid"}
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rsi14"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percentunit"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "red",
+                      "value": null
+                    },
+                    {
+                      "color": "green",
+                      "value": 30
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 50
+                    },
+                    {
+                      "color": "red",
+                      "value": 70
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 10
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "id": 4,
+      "repeat": "instrument",
+      "repeatDirection": "h",
+      "maxPerRow": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT argMax(close, bar_date) AS value, '${instrument}' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}'",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT argMax(ret_1d, bar_date) AS value, 'ret_1d' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}'",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT argMax(rsi14, bar_date) AS value, 'rsi14' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}'",
+          "refId": "C"
+        }
+      ],
+      "title": "$__repeat_value",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-mdg"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
             "mode": "palette-classic"
           },
           "custom": {
@@ -76,20 +440,49 @@
           },
           "unit": "currencyRUB"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ma20"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#fade2a",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ma50"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#b877d9",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
-        "y": 0
+        "y": 10
       },
-      "id": 1,
+      "id": 5,
       "options": {
         "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
+          "calcs": ["lastNotNull"],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -105,13 +498,33 @@
             "type": "grafana-clickhouse-datasource",
             "uid": "clickhouse-mdg"
           },
-          "editorMode": "SQL",
+          "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT bar_date AS time, close AS value, instrument_uid AS metric\nFROM market_data_gold.mart_daily_metrics\nWHERE $__timeFilter(bar_date)\nORDER BY bar_date",
+          "rawSql": "SELECT bar_date AS time, close AS value, 'close' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND $__timeFilter(bar_date) ORDER BY bar_date",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT bar_date AS time, ma20 AS value, 'ma20' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND $__timeFilter(bar_date) ORDER BY bar_date",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT bar_date AS time, ma50 AS value, 'ma50' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND $__timeFilter(bar_date) ORDER BY bar_date",
+          "refId": "C"
         }
       ],
-      "title": "Close по инструментам",
+      "title": "Close + MA20 + MA50",
       "type": "timeseries"
     },
     {
@@ -131,8 +544,199 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 50,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "volume_ma20"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#fade2a",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 0,
+        "y": 18
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": ["lastNotNull"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT bar_date AS time, volume AS value, 'volume' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND $__timeFilter(bar_date) ORDER BY bar_date",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT bar_date AS time, volume_ma20 AS value, 'volume_ma20' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND $__timeFilter(bar_date) ORDER BY bar_date",
+          "refId": "B"
+        }
+      ],
+      "title": "Volume vs MA20",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-mdg"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          },
+          "unit": "x"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 18
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT argMax(volume, bar_date) / argMax(volume_ma20, bar_date) AS value FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}'",
+          "refId": "A"
+        }
+      ],
+      "title": "Volume Ratio (сегодня)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-mdg"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
             "drawStyle": "line",
-            "fillOpacity": 0,
+            "fillOpacity": 30,
             "gradientMode": "none",
             "hideFrom": {
               "legend": false,
@@ -163,176 +767,16 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": null
               },
               {
-                "color": "yellow",
-                "value": 30
-              },
-              {
-                "color": "green",
+                "color": "#E02F44",
                 "value": 70
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-clickhouse-datasource",
-            "uid": "clickhouse-mdg"
-          },
-          "editorMode": "SQL",
-          "format": "table",
-          "rawSql": "SELECT bar_date AS time, rsi14 AS value, instrument_uid AS metric\nFROM market_data_gold.mart_daily_metrics\nWHERE $__timeFilter(bar_date) AND rsi14 IS NOT NULL\nORDER BY bar_date",
-          "refId": "A"
-        }
-      ],
-      "title": "RSI14 (30/70)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "grafana-clickhouse-datasource",
-        "uid": "clickhouse-mdg"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "bars",
-            "fillOpacity": 40,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "line"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 2
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 8
-      },
-      "id": 3,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "grafana-clickhouse-datasource",
-            "uid": "clickhouse-mdg"
-          },
-          "editorMode": "SQL",
-          "format": "table",
-          "rawSql": "SELECT bar_date AS time, volume_ratio AS value, instrument_uid AS metric\nFROM market_data_gold.mart_daily_metrics\nWHERE $__timeFilter(bar_date) AND volume_ratio IS NOT NULL\nORDER BY bar_date",
-          "refId": "A"
-        }
-      ],
-      "title": "Volume Ratio (порог 2 = x2 к MA20)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "grafana-clickhouse-datasource",
-        "uid": "clickhouse-mdg"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "continuous-GrYlRd"
-          },
-          "mappings": [],
-          "max": 5,
-          "min": -5,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
               },
               {
                 "color": "green",
-                "value": 0
+                "value": 30
               }
             ]
           },
@@ -342,34 +786,22 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 8
+        "w": 18,
+        "x": 0,
+        "y": 26
       },
-      "id": 4,
+      "id": 8,
       "options": {
-        "displayMode": "gradient",
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
+          "calcs": ["lastNotNull"],
+          "displayMode": "table",
           "placement": "bottom",
-          "showLegend": false
+          "showLegend": true
         },
-        "maxVizHeight": 300,
-        "minVizHeight": 10,
-        "minVizWidth": 0,
-        "namePlacement": "auto",
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": true,
-        "sizing": "auto",
-        "valueMode": "color"
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "targets": [
         {
@@ -377,14 +809,73 @@
             "type": "grafana-clickhouse-datasource",
             "uid": "clickhouse-mdg"
           },
-          "editorMode": "SQL",
+          "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT instrument_uid AS metric, argMax(ret_1d, bar_date) AS value\nFROM market_data_gold.mart_daily_metrics\nGROUP BY instrument_uid\nORDER BY metric",
+          "rawSql": "SELECT bar_date AS time, rsi14 AS value, 'rsi14' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND $__timeFilter(bar_date) ORDER BY bar_date",
           "refId": "A"
         }
       ],
-      "title": "ret_1d (последний день, %)",
-      "type": "bargauge"
+      "title": "RSI14 с зонами 30/70",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-mdg"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "currencyRUB"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 26
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT argMax(atr14, bar_date) AS value FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}'",
+          "refId": "A"
+        }
+      ],
+      "title": "ATR14 (ожидаемый размах)",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -414,59 +905,21 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "importance"
-            },
-            "properties": [
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-background",
-                  "mode": "basic"
-                }
-              },
-              {
-                "id": "thresholds",
-                "value": {
-                  "mode": "absolute",
-                  "steps": [
-                    {
-                      "color": "green",
-                      "value": null
-                    },
-                    {
-                      "color": "yellow",
-                      "value": 3
-                    },
-                    {
-                      "color": "red",
-                      "value": 5
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 34
       },
-      "id": 5,
+      "id": 10,
       "options": {
         "cellHeight": "sm",
         "footer": {
           "countRows": false,
           "fields": "",
-          "reducer": [
-            "sum"
-          ],
+          "reducer": ["sum"],
           "show": false
         },
         "showHeader": true
@@ -477,13 +930,13 @@
             "type": "grafana-clickhouse-datasource",
             "uid": "clickhouse-mdg"
           },
-          "editorMode": "SQL",
+          "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT\n    event_type,\n    ifNull(instrument_uid, '') AS instrument_uid,\n    expected_date,\n    actual,\n    importance,\n    source\nFROM market_data.events FINAL\nWHERE ifNull(expected_date, toDate('1970-01-01')) >= today()\nORDER BY expected_date, event_type",
+          "rawSql": "SELECT event_type, instrument_uid, expected_date FROM market_data.events FINAL WHERE expected_date >= today() ORDER BY expected_date, event_type",
           "refId": "A"
         }
       ],
-      "title": "События (expected_date >= сегодня)",
+      "title": "Ближайшие события",
       "type": "table"
     },
     {
@@ -523,23 +976,19 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 42
       },
-      "id": 6,
+      "id": 11,
       "options": {
         "colorMode": "value",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "horizontal",
-        "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "pe",
-          "values": true
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
         },
-        "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
@@ -549,14 +998,134 @@
             "type": "grafana-clickhouse-datasource",
             "uid": "clickhouse-mdg"
           },
-          "editorMode": "SQL",
+          "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT\n    s.asset_uid AS asset_uid,\n    JSONExtractFloat(s.payload, 'peRatioTtm') AS pe,\n    JSONExtractFloat(s.payload, 'priceToBookTtm') AS pb,\n    JSONExtractFloat(s.payload, 'forwardAnnualDividendYield') AS fwd_dy\nFROM (\n    SELECT asset_uid, argMax(payload, snapshot_ts) AS payload\n    FROM market_data.fundamentals_snapshots\n    GROUP BY asset_uid\n) AS s\nORDER BY s.asset_uid",
+          "rawSql": "SELECT asset_uid AS metric, JSONExtractFloat(payload, 'peRatioTtm') AS value FROM (SELECT asset_uid, argMax(payload, snapshot_ts) AS payload FROM market_data.fundamentals_snapshots GROUP BY asset_uid) ORDER BY asset_uid",
           "refId": "A"
         }
       ],
-      "title": "P/E (последний снапшот фундаментала)",
-      "type": "stat"
+      "title": "P/E TTM по активам",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-mdg"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 4,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 50
+      },
+      "id": 12,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT asset_uid AS metric, JSONExtractFloat(payload, 'priceToBookTtm') AS value FROM (SELECT asset_uid, argMax(payload, snapshot_ts) AS payload FROM market_data.fundamentals_snapshots GROUP BY asset_uid) ORDER BY asset_uid",
+          "refId": "A"
+        }
+      ],
+      "title": "P/B TTM по активам",
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-mdg"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 58
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawSql": "SELECT asset_uid AS metric, JSONExtractFloat(payload, 'forwardAnnualDividendYield') AS value FROM (SELECT asset_uid, argMax(payload, snapshot_ts) AS payload FROM market_data.fundamentals_snapshots GROUP BY asset_uid) ORDER BY asset_uid",
+          "refId": "A"
+        }
+      ],
+      "title": "Forward Dividend Yield по активам",
+      "type": "bargauge"
     }
   ],
   "refresh": "5m",
@@ -565,7 +1134,49 @@
     "marketdata"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "SBER",
+          "value": "e6123145-9665-43e0-8413-cd61b8aa9b13"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Инструмент",
+        "multi": false,
+        "name": "instrument",
+        "options": [
+          {
+            "selected": true,
+            "text": "SBER",
+            "value": "e6123145-9665-43e0-8413-cd61b8aa9b13"
+          },
+          {
+            "selected": false,
+            "text": "GAZP",
+            "value": "962e2a95-02a9-4171-abd7-aa198dbe643a"
+          },
+          {
+            "selected": false,
+            "text": "CNYRUBF",
+            "value": "c300543d-aa18-4249-b110-615409dde036"
+          },
+          {
+            "selected": false,
+            "text": "IMOEXF",
+            "value": "5bcff194-f10d-4314-b9ee-56b7fdb344fd"
+          },
+          {
+            "selected": false,
+            "text": "IBZ6",
+            "value": "14d97146-1f46-435b-984f-3d4594a5183c"
+          }
+        ],
+        "query": "e6123145-9665-43e0-8413-cd61b8aa9b13 : SBER, 962e2a95-02a9-4171-abd7-aa198dbe643a : GAZP, c300543d-aa18-4249-b110-615409dde036 : CNYRUBF, 5bcff194-f10d-4314-b9ee-56b7fdb344fd : IMOEXF, 14d97146-1f46-435b-984f-3d4594a5183c : IBZ6",
+        "type": "custom"
+      }
+    ]
   },
   "time": {
     "from": "now-30d",
@@ -573,8 +1184,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "MarketData",
+  "title": "MarketData — Overview",
   "uid": "marketdata-overview",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
