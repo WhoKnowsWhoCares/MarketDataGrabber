@@ -221,3 +221,8 @@ __marimo__/
 
 # kanban dispatcher worktrees
 .worktrees/
+
+# Bot SQLite database
+data/
+*.sqlite
+*.sqlite-journal

@@ -49,6 +49,37 @@ services:
     restart: unless-stopped
     networks: [mdg-net]
 
+  redis:
+    image: redis:7-alpine
+    container_name: mdg-redis
+    profiles: ["bot"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [mdg-net]
+
+  telegram-bot:
+    image: python:3.12-slim
+    container_name: mdg-bot
+    profiles: ["bot"]
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      ADMIN_CHAT_ID: ${ADMIN_CHAT_ID}
+      REDIS_URL: redis://redis:6379/0
+      TZ: ${TZ:-Europe/Moscow}
+    command: sh -c "pip install --no-cache-dir -e . aiogram redis && python -m mdgrabber.bot"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [mdg-net]
+
 volumes:
   clickhouse_data:
   grafana_data:
