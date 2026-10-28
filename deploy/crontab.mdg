@@ -1,0 +1,8 @@
+# MarketDataGrabber scheduled jobs (TZ хоста = MSK)
+15 0 * * 1-5  cd /home/alexander/hermes-compose/data/workspace/MarketData && set -a && . ./.env && set +a && PYTHONPATH=src .venv/bin/python scripts/increment_candles.py >> logs/increment_candles.log 2>&1  # MDG:auto
+35 0 * * *    cd /home/alexander/hermes-compose/data/workspace/MarketData && set -a && . ./.env && set +a && PYTHONPATH=src .venv/bin/python scripts/run_marts.py >> logs/run_marts.log 2>&1  # MDG:auto
+45 0 * * *    cd /home/alexander/hermes-compose/data/workspace/MarketData && set -a && . ./.env && set +a && PYTHONPATH=src .venv/bin/python transforms/run_dq.py >> logs/run_dq.log 2>&1  # MDG:auto
+30 6 * * *    cd /home/alexander/hermes-compose/data/workspace/MarketData && set -a && . ./.env && set +a && PYTHONPATH=src .venv/bin/python scripts/collect_fundamentals.py >> logs/collect_fundamentals.log 2>&1  # MDG:auto
+0 4 * * 0     cd /home/alexander/hermes-compose/data/workspace/MarketData && set -a && . ./.env && set +a && PYTHONPATH=src .venv/bin/python scripts/collect_events.py >> logs/collect_events.log 2>&1  # MDG:auto
+0 * * * *     cd /home/alexander/hermes-compose/data/workspace/MarketData && set -a && . ./.env && set +a && PYTHONPATH=src .venv/bin/python scripts/watchdog.py >> logs/watchdog.log 2>&1  # MDG:auto
+10 9 * * *    cd /home/alexander/hermes-compose/data/workspace/MarketData && set -a && . ./.env && set +a && PYTHONPATH=src .venv/bin/python scripts/daily_digest.py >> logs/daily_digest.log 2>&1  # MDG:auto
