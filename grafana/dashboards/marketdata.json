@@ -106,7 +106,7 @@
             "uid": "clickhouse-mdg"
           },
           "editorMode": "SQL",
-          "format": "time_series",
+          "format": "table",
           "rawSql": "SELECT bar_date AS time, close AS value, instrument_uid AS metric\nFROM market_data_gold.mart_daily_metrics\nWHERE $__timeFilter(bar_date)\nORDER BY bar_date",
           "refId": "A"
         }
@@ -207,7 +207,7 @@
             "uid": "clickhouse-mdg"
           },
           "editorMode": "SQL",
-          "format": "time_series",
+          "format": "table",
           "rawSql": "SELECT bar_date AS time, rsi14 AS value, instrument_uid AS metric\nFROM market_data_gold.mart_daily_metrics\nWHERE $__timeFilter(bar_date) AND rsi14 IS NOT NULL\nORDER BY bar_date",
           "refId": "A"
         }
@@ -302,7 +302,7 @@
             "uid": "clickhouse-mdg"
           },
           "editorMode": "SQL",
-          "format": "time_series",
+          "format": "table",
           "rawSql": "SELECT bar_date AS time, volume_ratio AS value, instrument_uid AS metric\nFROM market_data_gold.mart_daily_metrics\nWHERE $__timeFilter(bar_date) AND volume_ratio IS NOT NULL\nORDER BY bar_date",
           "refId": "A"
         }
@@ -573,7 +573,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "MarketData — Overview",
+  "title": "MarketData",
   "uid": "marketdata-overview",
   "version": 1,
   "weekStart": ""
