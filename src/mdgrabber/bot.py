@@ -211,9 +211,10 @@ def main() -> None:
     dp = Dispatcher()
     dp.include_router(router)
 
-    # Прокси-сессия для aiogram (SOCKS — через aiohttp-socks, extra aiogram[proxy])
+    # Прокси-сессия для aiogram (SOCKS — через aiohttp-socks, extra aiogram[proxy]).
+    # python_socks не понимает схему socks5h — нормализуем до socks5.
     from aiogram.client.session.aiohttp import AiohttpSession
-    proxy_url = settings.telegram_proxy
+    proxy_url = settings.telegram_proxy.replace("socks5h://", "socks5://")
     bot.session = AiohttpSession(proxy=proxy_url)
 
     dp.feed_update.start(bot)
