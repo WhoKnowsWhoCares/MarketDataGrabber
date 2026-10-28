@@ -217,7 +217,6 @@ def main() -> None:
     proxy_url = settings.telegram_proxy.replace("socks5h://", "socks5://")
     bot.session = AiohttpSession(proxy=proxy_url)
 
-    dp.feed_update.start(bot)
     print("🤖 Bot starting (long polling)...")
     dp.run_polling(bot, allowed_updates=Message.ALL_UPDATE_TYPES)
 
