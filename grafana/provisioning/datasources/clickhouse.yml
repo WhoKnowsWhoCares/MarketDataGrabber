@@ -1,0 +1,21 @@
+# Provisioning ClickHouse datasource для Grafana (как код).
+# Переменные $CLICKHOUSE_USER / $CLICKHOUSE_PASSWORD резолвятся Grafana
+# из окружения контейнера (см. environment сервиса grafana в docker-compose.yml).
+apiVersion: 1
+
+datasources:
+  - name: ClickHouse
+    uid: clickhouse-mdg
+    type: grafana-clickhouse-datasource
+    access: proxy
+    url: http://mdg-clickhouse:8123
+    isDefault: true
+    editable: false
+    jsonData:
+      server: mdg-clickhouse
+      port: 8123
+      protocol: http
+      username: $CLICKHOUSE_USER
+      defaultDatabase: market_data
+    secureJsonData:
+      password: $CLICKHOUSE_PASSWORD
