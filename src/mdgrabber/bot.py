@@ -211,14 +211,10 @@ def main() -> None:
     dp = Dispatcher()
     dp.include_router(router)
 
-    # Прокси-сессия для aiogram
+    # Прокси-сессия для aiogram (SOCKS — через aiohttp-socks, extra aiogram[proxy])
     from aiogram.client.session.aiohttp import AiohttpSession
-    import aiohttp
-    proxy_url = settings.telegram_proxy.replace("socks5h://", "socks5://")
-    session = AiohttpSession(
-        connector=aiohttp.ProxyConnector.from_url(proxy_url),
-    )
-    bot.session = session
+    proxy_url = settings.telegram_proxy
+    bot.session = AiohttpSession(proxy=proxy_url)
 
     dp.feed_update.start(bot)
     print("🤖 Bot starting (long polling)...")
