@@ -837,7 +837,20 @@
           },
           "unit": "none"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "RSI14"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
