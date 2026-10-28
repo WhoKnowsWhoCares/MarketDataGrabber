@@ -14,7 +14,6 @@ from pathlib import Path
 
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.enums import ParseMode
-from aiogram.exceptions import TelegramRetryError
 from aiogram.filters import Command
 from aiogram.types import (
     Message,
