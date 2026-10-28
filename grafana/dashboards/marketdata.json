@@ -209,7 +209,7 @@
       },
       "id": 3,
       "options": {
-        "colorMode": "background",
+        "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
@@ -217,10 +217,10 @@
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "/^text$/",
+          "fields": "/^value$/",
           "values": false
         },
-        "textMode": "value_and_name",
+        "textMode": "value",
         "wideLayout": true
       },
       "targets": [
@@ -488,7 +488,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT bar_date AS time, close AS value, 'close' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = 'e6123145-9665-43e0-8413-cd61b8aa9b13' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
+          "rawSql": "SELECT toDateTime(bar_date, 'UTC') AS time, close AS value, 'close' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = 'e6123145-9665-43e0-8413-cd61b8aa9b13' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
           "refId": "A"
         },
         {
@@ -498,7 +498,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT bar_date AS time, ma20 AS value, 'ma20' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = 'e6123145-9665-43e0-8413-cd61b8aa9b13' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
+          "rawSql": "SELECT toDateTime(bar_date, 'UTC') AS time, ma20 AS value, 'ma20' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = 'e6123145-9665-43e0-8413-cd61b8aa9b13' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
           "refId": "B"
         },
         {
@@ -508,7 +508,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT bar_date AS time, ma50 AS value, 'ma50' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = 'e6123145-9665-43e0-8413-cd61b8aa9b13' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
+          "rawSql": "SELECT toDateTime(bar_date, 'UTC') AS time, ma50 AS value, 'ma50' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = 'e6123145-9665-43e0-8413-cd61b8aa9b13' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
           "refId": "C"
         }
       ],
@@ -628,7 +628,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT bar_date AS time, volume AS value, 'volume' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = 'e6123145-9665-43e0-8413-cd61b8aa9b13' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
+          "rawSql": "SELECT toDateTime(bar_date, 'UTC') AS time, volume AS value, 'volume' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = 'e6123145-9665-43e0-8413-cd61b8aa9b13' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
           "refId": "A"
         },
         {
@@ -638,7 +638,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT bar_date AS time, volume_ma20 AS value, 'volume_ma20' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = 'e6123145-9665-43e0-8413-cd61b8aa9b13' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
+          "rawSql": "SELECT toDateTime(bar_date, 'UTC') AS time, volume_ma20 AS value, 'volume_ma20' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = 'e6123145-9665-43e0-8413-cd61b8aa9b13' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
           "refId": "B"
         }
       ],
@@ -805,7 +805,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT bar_date AS time, rsi14 AS value, 'rsi14' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = 'e6123145-9665-43e0-8413-cd61b8aa9b13' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
+          "rawSql": "SELECT toDateTime(bar_date, 'UTC') AS time, rsi14 AS value, 'rsi14' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = 'e6123145-9665-43e0-8413-cd61b8aa9b13' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
           "refId": "A"
         }
       ],
