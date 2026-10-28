@@ -218,7 +218,7 @@ def main() -> None:
     bot.session = AiohttpSession(proxy=proxy_url)
 
     print("🤖 Bot starting (long polling)...")
-    dp.run_polling(bot, allowed_updates=Message.ALL_UPDATE_TYPES)
+    dp.run_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
 if __name__ == "__main__":
