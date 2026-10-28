@@ -107,7 +107,7 @@ profile bot:
   redis             # cooldown алертов, pending-подтверждения сделок (TTL), кэш словарей
   sqlite (volume)   # конфиги: users, subscriptions, quiet hours
 profile mcp (P3.5):
-  mcp               # FastMCP, Streamable HTTP: public/private инструменты, ключи, audit
+  mcp               # FastMCP, Streamable HTTP: public/private инструменты, ключи, audit; порт на docker-подсети, TLS — глобальный nginx владельца (вручную)
 profile web (позже):
   api               # FastAPI: бэкенд HTML-страницы (/candles, /fundamentals, /signals) + админ-эндпоинты
 profile live (P6):
@@ -150,7 +150,7 @@ profile live (P6):
 
 Любой агент (Hermes, Claude, кастомные) получает данные через MCP-инструменты, без SQL-доступа к ClickHouse.
 
-- **Реализация:** Python, официальный SDK `mcp` (FastMCP), транспорт **Streamable HTTP**; сервис `mcp` в compose (профиль `mcp`), наружу через reverse proxy с TLS.
+- **Реализация:** Python, официальный SDK `mcp` (FastMCP), транспорт **Streamable HTTP**; сервис `mcp` в compose (профиль `mcp`). Порт биндится на docker-подсеть (как ClickHouse — `CH_BIND_IP`), открытые порты только у публичных сервисов. TLS-терминацию и внешний проброс позже делает глобальный nginx локальной сети — настраивается владельцем вручную, вне скоупа compose.
 - **Доступ:** API-ключи; таблица `mcp_keys(key_hash sha256, user_id, scope, created, revoked)` — храним только хэши. Audit-лог `mcp_audit(ts, key_id, tool, params, rows_returned)`. Rate-limit на ключ.
 - **Read-only по построению:** у MCP-сервера нет write-методов вообще; ClickHouse-пользователь `mdg_readonly` с `GRANT SELECT` только на `market_data_gold.*`, `events`, `fundamentals_snapshots` (не bronze).
 - **Граница public/private (решено):**
