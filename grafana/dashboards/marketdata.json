@@ -210,7 +210,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT toString(max(bar_date)) AS bar_date FROM market_data_gold.mart_daily_metrics",
+          "rawSql": "SELECT toString(max(bar_date)) AS value FROM market_data_gold.mart_daily_metrics",
           "refId": "A"
         }
       ],
