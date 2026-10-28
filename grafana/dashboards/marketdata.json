@@ -145,7 +145,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT gap_vs_calendar FROM market_data_aux.dq_metrics ORDER BY run_ts DESC LIMIT 1",
+          "rawSql": "SELECT value FROM market_data_aux.dq_metrics WHERE metric = 'gap_vs_calendar' ORDER BY run_ts DESC LIMIT 1",
           "refId": "A"
         }
       ],
@@ -343,9 +343,7 @@
         "y": 4
       },
       "id": 4,
-      "repeat": "instrument",
       "repeatDirection": "h",
-      "maxPerRow": 5,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
@@ -512,7 +510,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT bar_date AS time, close AS value, 'close' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND $__timeFilter(bar_date) ORDER BY bar_date",
+          "rawSql": "SELECT bar_date AS time, close AS value, 'close' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
           "refId": "A"
         },
         {
@@ -522,7 +520,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT bar_date AS time, ma20 AS value, 'ma20' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND $__timeFilter(bar_date) ORDER BY bar_date",
+          "rawSql": "SELECT bar_date AS time, ma20 AS value, 'ma20' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
           "refId": "B"
         },
         {
@@ -532,7 +530,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT bar_date AS time, ma50 AS value, 'ma50' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND $__timeFilter(bar_date) ORDER BY bar_date",
+          "rawSql": "SELECT bar_date AS time, ma50 AS value, 'ma50' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
           "refId": "C"
         }
       ],
@@ -652,7 +650,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT bar_date AS time, volume AS value, 'volume' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND $__timeFilter(bar_date) ORDER BY bar_date",
+          "rawSql": "SELECT bar_date AS time, volume AS value, 'volume' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
           "refId": "A"
         },
         {
@@ -662,7 +660,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT bar_date AS time, volume_ma20 AS value, 'volume_ma20' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND $__timeFilter(bar_date) ORDER BY bar_date",
+          "rawSql": "SELECT bar_date AS time, volume_ma20 AS value, 'volume_ma20' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
           "refId": "B"
         }
       ],
@@ -829,7 +827,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT bar_date AS time, rsi14 AS value, 'rsi14' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND $__timeFilter(bar_date) ORDER BY bar_date",
+          "rawSql": "SELECT bar_date AS time, rsi14 AS value, 'rsi14' AS metric FROM market_data_gold.mart_daily_metrics WHERE instrument_uid = '${instrument}' AND bar_date >= now() - INTERVAL 30 DAY ORDER BY bar_date",
           "refId": "A"
         }
       ],
