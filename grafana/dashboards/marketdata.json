@@ -231,7 +231,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT 0 AS value, toString(max(bar_date)) AS text FROM market_data_gold.mart_daily_metrics",
+          "rawSql": "SELECT toString(max(bar_date)) AS value FROM market_data_gold.mart_daily_metrics",
           "refId": "A"
         }
       ],
@@ -567,7 +567,7 @@
               }
             ]
           },
-          "unit": "none"
+          "unit": "short"
         },
         "overrides": [
           {
@@ -669,7 +669,7 @@
               }
             ]
           },
-          "unit": "x"
+          "unit": "none"
         },
         "overrides": []
       },
@@ -772,7 +772,7 @@
               }
             ]
           },
-          "unit": "percent"
+          "unit": "none"
         },
         "overrides": []
       },
