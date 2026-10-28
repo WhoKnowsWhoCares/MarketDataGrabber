@@ -97,11 +97,6 @@ services:
       CLICKHOUSE_HOST: clickhouse
       REDIS_URL: redis://redis:6379/0
       TZ: ${TZ:-Europe/Moscow}
-    depends_on:
-      clickhouse:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     command:
       - sh
       - -c
