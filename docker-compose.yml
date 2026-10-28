@@ -8,8 +8,7 @@ services:
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
       TZ: ${TZ:-Europe/Moscow}
     ports:
-      # Нативный протокол 9000 наружу не публикуем (занят Portainer; другие
-      # контейнеры ходят по сети compose по имени сервиса clickhouse:9000).
+      # Внутренний сервис (БД): только docker-подсеть, НЕ публичный
       - "${CH_BIND_IP:-127.0.0.1}:8123:8123"
     volumes:
       - clickhouse_data:/var/lib/clickhouse
@@ -35,7 +34,8 @@ services:
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
       TZ: ${TZ:-Europe/Moscow}
     ports:
-      - "${CH_BIND_IP:-127.0.0.1}:3000:3000"
+      # Публичный сервис (дашборды): бинд на все интерфейсы; TLS позже — глобальный nginx владельца
+      - "${GF_BIND_IP:-127.0.0.1}:3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
