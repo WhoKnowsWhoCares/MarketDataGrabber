@@ -174,7 +174,7 @@ def get_latest_status(client, ticker: str) -> dict:
     def _q() -> dict:
         sql = f"""
         SELECT
-            bar_date,
+            last_date AS bar_date,
             close,
             ret_1d, ret_5d, ret_20d,
             rsi14, volume_ratio, gap_pct,
@@ -183,7 +183,7 @@ def get_latest_status(client, ticker: str) -> dict:
             close > ma50 AS above_ma50
         FROM (
             SELECT
-                max(bar_date) AS bar_date,
+                max(bar_date) AS last_date,
                 argMax(close, bar_date) AS close,
                 argMax(ret_1d, bar_date) AS ret_1d,
                 argMax(ret_5d, bar_date) AS ret_5d,
