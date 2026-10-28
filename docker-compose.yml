@@ -101,7 +101,30 @@ services:
       - sh
       - -c
       - pip install --no-cache-dir -e . "httpx[socks]" structlog python-dotenv && sleep infinity
-    restart: unless-stopped
+  mcp:
+    image: python:3.12.7-slim
+    container_name: mdg-mcp
+    profiles: ["mcp"]
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      TZ: ${TZ:-Europe/Moscow}
+    env_file: .env
+    ports:
+      # MCP-сервер: читающий API над gold-витринами (аутентификация X-API-Key)
+      - "${MCP_BIND_IP:-0.0.0.0}:${MCP_PORT:-8900}:8900"
+    command:
+      - sh
+      - -c
+      - pip install --no-cache-dir . "mcp>=1.2.0,<2" uvicorn && exec env PYTHONPATH=src python -m mdgrabber.mcp_server
+    healthcheck:
+      # TCP-only: /mcp без ключа отвечает 401 — это нормально для живого сервера
+      test: ["CMD", "python", "-c", "import socket;socket.create_connection(('127.0.0.1',8900),5)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s    restart: unless-stopped
     networks: [mdg-net]
 
 volumes:

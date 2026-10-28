@@ -30,6 +30,10 @@ class Settings:
     telegram_proxy: str
     tls_verify: bool
     log_level: str
+    mcp_ro_password: str
+    mcp_port: int
+    mcp_bind_ip: str
+    mcp_smoke_key: str
 
     @classmethod
     def load(cls) -> "Settings":
@@ -50,6 +54,11 @@ class Settings:
             # TLS на хосте перехватывается MITM-прокси; CA в системном доверии нет.
             tls_verify=os.getenv("TLS_VERIFY", "false").lower() == "true",
             log_level=os.getenv("LOG_LEVEL", "INFO"),
+            # MCP: read-only пароль mdg_ro, порт/бинд сервера, ключ для smoke.
+            mcp_ro_password=os.getenv("MCP_RO_PASSWORD", ""),
+            mcp_port=int(os.getenv("MCP_PORT", "8900")),
+            mcp_bind_ip=os.getenv("MCP_BIND_IP", "0.0.0.0"),
+            mcp_smoke_key=os.getenv("MCP_SMOKE_KEY", ""),
         )
 
     def masked(self) -> dict:
