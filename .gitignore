@@ -226,3 +226,8 @@ __marimo__/
 data/
 *.sqlite
 *.sqlite-journal
+
+# MDG runtime logs
+cron job logs live in logs/ (only .gitkeep is committed)
+logs/*
+!logs/.gitkeep
