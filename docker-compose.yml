@@ -76,7 +76,7 @@ services:
     command:
       - sh
       - -c
-      - pip install --no-cache-dir -e . "aiogram[proxy]" redis && exec python -m mdgrabber.bot
+      - pip install --no-cache-dir -e . "aiogram[proxy]" redis uvloop && exec python -m mdgrabber.bot
     depends_on:
       redis:
         condition: service_healthy

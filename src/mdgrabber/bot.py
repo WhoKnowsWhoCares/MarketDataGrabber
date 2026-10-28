@@ -106,13 +106,14 @@ async def cmd_status(msg: Message, bot: Bot) -> None:
             "SELECT max(bar_time) AS t FROM market_data.candles_1m"
         )
         bar_date = list(row_date.named_results())[0]["d"]
-        bar_time = list(row_time.named_results())[0]["t"] or ""
+        bar_time = list(row_time.named_results())[0]["t"]  # datetime или None
         now = datetime.now(timezone.utc)
         if bar_time:
-            latest_dt = f"{bar_date}T{bar_time}"
-            age_minutes = (now - datetime.fromisoformat(latest_dt).replace(tzinfo=timezone.utc)).total_seconds() / 60
+            # bar_time из candles_1m — уже полное datetime (UTC)
+            latest_dt = bar_time.replace(tzinfo=timezone.utc)
+            age_minutes = (now - latest_dt).total_seconds() / 60
         else:
-            latest_dt = str(bar_date)
+            latest_dt = bar_date
             age_minutes = (now.date() - bar_date).days * 1440
 
         if age_minutes < 120:
