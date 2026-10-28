@@ -19,7 +19,7 @@ EXPECTED_JOBS = {
 }
 
 # единственный скрипт, которого может ещё не быть в репо ( ждём P3.6a )
-PENDING = {"scripts/run_marts.py"}
+PENDING: set[str] = set()  # P3.6a смёржена — run_marts.py существует
 
 
 def job_lines() -> list[str]:

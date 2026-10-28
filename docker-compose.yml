@@ -83,6 +83,27 @@ services:
     restart: unless-stopped
     networks: [mdg-net]
 
+  # Разовые cron-задачи (сбор, витрины, watchdog, дайджест) — exec'ом из cron хоста
+  jobs:
+    image: python:3.12-slim
+    container_name: mdg-jobs
+    profiles: ["jobs"]
+    working_dir: /app
+    volumes:
+      - ./:/app
+    env_file:
+      - .env
+    environment:
+      CLICKHOUSE_HOST: clickhouse
+      REDIS_URL: redis://redis:6379/0
+      TZ: ${TZ:-Europe/Moscow}
+    command:
+      - sh
+      - -c
+      - pip install --no-cache-dir -e . "httpx[socks]" structlog python-dotenv && sleep infinity
+    restart: unless-stopped
+    networks: [mdg-net]
+
 volumes:
   clickhouse_data:
   grafana_data:
