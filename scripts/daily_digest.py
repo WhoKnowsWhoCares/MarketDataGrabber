@@ -28,7 +28,7 @@ def main() -> int:
     settings = Settings.load()
     text = build_digest(settings)
     try:
-        send_telegram(settings, text, category="market")
+        send_telegram(settings, text, category="market", parse_mode="HTML")
     except Exception as e:  # noqa: BLE001
         log.error("telegram_send_failed", error=str(e))
         return 1
