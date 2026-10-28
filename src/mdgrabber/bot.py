@@ -103,7 +103,7 @@ async def cmd_status(msg: Message, bot: Bot) -> None:
             "SELECT max(bar_date) AS d FROM market_data_gold.mart_daily_metrics"
         )
         row_time = client.query(
-            "SELECT max(bar_time) AS t FROM market_data_gold.mart_daily_metrics"
+            "SELECT max(bar_time) AS t FROM market_data.candles_1m"
         )
         bar_date = list(row_date.named_results())[0]["d"]
         bar_time = list(row_time.named_results())[0]["t"] or ""

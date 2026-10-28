@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -20,10 +23,15 @@
   "links": [],
   "panels": [
     {
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-mdg" },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-mdg"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -34,37 +42,69 @@
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": true,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "off" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null }
+              {
+                "color": "green",
+                "value": null
+              }
             ]
           },
           "unit": "currencyRUB"
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
       "id": 1,
       "options": {
-        "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "none" }
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-mdg" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
           "editorMode": "SQL",
           "format": "time_series",
           "rawSql": "SELECT bar_date AS time, close AS value, instrument_uid AS metric\nFROM market_data_gold.mart_daily_metrics\nWHERE $__timeFilter(bar_date)\nORDER BY bar_date",
@@ -75,10 +115,15 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-mdg" },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-mdg"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -89,16 +134,27 @@
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": true,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "line" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
           },
           "mappings": [],
           "max": 100,
@@ -106,23 +162,50 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null },
-              { "color": "yellow", "value": 30 },
-              { "color": "green", "value": 70 }
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 30
+              },
+              {
+                "color": "green",
+                "value": 70
+              }
             ]
           }
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
       "id": 2,
       "options": {
-        "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "none" }
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-mdg" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
           "editorMode": "SQL",
           "format": "time_series",
           "rawSql": "SELECT bar_date AS time, rsi14 AS value, instrument_uid AS metric\nFROM market_data_gold.mart_daily_metrics\nWHERE $__timeFilter(bar_date) AND rsi14 IS NOT NULL\nORDER BY bar_date",
@@ -133,10 +216,15 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-mdg" },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-mdg"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "axisBorderShow": false,
             "axisCenteredZero": false,
@@ -147,37 +235,72 @@
             "drawStyle": "bars",
             "fillOpacity": 40,
             "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 5,
-            "scaleDistribution": { "type": "linear" },
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": true,
-            "stacking": { "group": "A", "mode": "none" },
-            "thresholdsStyle": { "mode": "line" }
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 2 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
             ]
           }
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
       "id": 3,
       "options": {
-        "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
-        "tooltip": { "mode": "multi", "sort": "none" }
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-mdg" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
           "editorMode": "SQL",
           "format": "time_series",
           "rawSql": "SELECT bar_date AS time, volume_ratio AS value, instrument_uid AS metric\nFROM market_data_gold.mart_daily_metrics\nWHERE $__timeFilter(bar_date) AND volume_ratio IS NOT NULL\nORDER BY bar_date",
@@ -188,42 +311,72 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-mdg" },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-mdg"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "continuous-GrYlRd" },
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
           "mappings": [],
           "max": 5,
           "min": -5,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": 0 }
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0
+              }
             ]
           },
           "unit": "percent"
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
       "id": 4,
       "options": {
         "displayMode": "gradient",
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": false },
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
         "maxVizHeight": 300,
         "minVizHeight": 10,
         "minVizWidth": 0,
         "namePlacement": "auto",
         "orientation": "horizontal",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "showUnfilled": true,
         "sizing": "auto",
         "valueMode": "color"
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-mdg" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
           "editorMode": "SQL",
           "format": "table",
           "rawSql": "SELECT instrument_uid AS metric, argMax(ret_1d, bar_date) AS value\nFROM market_data_gold.mart_daily_metrics\nGROUP BY instrument_uid\nORDER BY metric",
@@ -234,39 +387,64 @@
       "type": "bargauge"
     },
     {
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-mdg" },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-mdg"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "align": "auto",
-            "cellOptions": { "type": "auto" },
+            "cellOptions": {
+              "type": "auto"
+            },
             "inspect": false
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null }
+              {
+                "color": "green",
+                "value": null
+              }
             ]
           }
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "importance" },
+            "matcher": {
+              "id": "byName",
+              "options": "importance"
+            },
             "properties": [
               {
                 "id": "custom.cellOptions",
-                "value": { "type": "color-background", "mode": "basic" }
+                "value": {
+                  "type": "color-background",
+                  "mode": "basic"
+                }
               },
               {
                 "id": "thresholds",
                 "value": {
                   "mode": "absolute",
                   "steps": [
-                    { "color": "green", "value": null },
-                    { "color": "yellow", "value": 3 },
-                    { "color": "red", "value": 5 }
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 3
+                    },
+                    {
+                      "color": "red",
+                      "value": 5
+                    }
                   ]
                 }
               }
@@ -274,16 +452,31 @@
           }
         ]
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
       "id": 5,
       "options": {
         "cellHeight": "sm",
-        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-mdg" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
           "editorMode": "SQL",
           "format": "table",
           "rawSql": "SELECT\n    event_type,\n    ifNull(instrument_uid, '') AS instrument_uid,\n    expected_date,\n    actual,\n    importance,\n    source\nFROM market_data.events FINAL\nWHERE ifNull(expected_date, toDate('1970-01-01')) >= today()\nORDER BY expected_date, event_type",
@@ -294,25 +487,44 @@
       "type": "table"
     },
     {
-      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-mdg" },
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "clickhouse-mdg"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "decimals": 1,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 10 },
-              { "color": "red", "value": 20 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
             ]
           },
           "unit": "x"
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
       "id": 6,
       "options": {
         "colorMode": "value",
@@ -320,17 +532,26 @@
         "justifyMode": "auto",
         "orientation": "horizontal",
         "percentChangeColorMode": "standard",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "pe", "values": true },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "pe",
+          "values": true
+        },
         "showPercentChange": false,
         "textMode": "auto",
         "wideLayout": true
       },
       "targets": [
         {
-          "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-mdg" },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "clickhouse-mdg"
+          },
           "editorMode": "SQL",
           "format": "table",
-          "rawSql": "SELECT\n    s.asset_uid AS asset_uid,\n    toFloat64OrNaN(JSONExtractString(s.payload, 'profitability', 'units'))\n      + toFloat64OrNaN(JSONExtractString(s.payload, 'profitability', 'nano')) / 1e9 AS pe\nFROM (\n    SELECT asset_uid, argMax(payload, snapshot_ts) AS payload\n    FROM market_data.fundamentals_snapshots\n    GROUP BY asset_uid\n) AS s\nORDER BY s.asset_uid",
+          "rawSql": "SELECT\n    s.asset_uid AS asset_uid,\n    JSONExtractFloat(s.payload, 'peRatioTtm') AS pe,\n    JSONExtractFloat(s.payload, 'priceToBookTtm') AS pb,\n    JSONExtractFloat(s.payload, 'forwardAnnualDividendYield') AS fwd_dy\nFROM (\n    SELECT asset_uid, argMax(payload, snapshot_ts) AS payload\n    FROM market_data.fundamentals_snapshots\n    GROUP BY asset_uid\n) AS s\nORDER BY s.asset_uid",
           "refId": "A"
         }
       ],
@@ -340,9 +561,16 @@
   ],
   "refresh": "5m",
   "schemaVersion": 39,
-  "tags": ["marketdata"],
-  "templating": { "list": [] },
-  "time": { "from": "now-90d", "to": "now" },
+  "tags": [
+    "marketdata"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
   "timepicker": {},
   "timezone": "browser",
   "title": "MarketData — Overview",

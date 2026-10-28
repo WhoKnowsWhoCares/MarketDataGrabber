@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Optional
 
 log = logging.getLogger(__name__)
@@ -26,7 +27,8 @@ def allow(key: str, ttl_seconds: int = 10, redis_url: Optional[str] = None) -> b
         return True
 
     if redis_url is None:
-        redis_url = "redis://localhost:6379/0"
+        # compose передаёт REDIS_URL (redis://redis:6379/0); вне docker — localhost
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
     try:
         r = _redis_module.from_url(redis_url, socket_connect_timeout=2, socket_timeout=2)
