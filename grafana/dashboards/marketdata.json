@@ -367,7 +367,7 @@
           },
           "editorMode": "code",
           "format": "table",
-          "rawSql": "SELECT argMax(close, bar_date) AS value, instrument_uid AS metric FROM market_data_gold.mart_daily_metrics ",
+          "rawSql": "SELECT argMax(close, bar_date) AS value, instrument_uid AS metric FROM market_data_gold.mart_daily_metrics GROUP BY instrument_uid",
           "refId": "A"
         },
         {
