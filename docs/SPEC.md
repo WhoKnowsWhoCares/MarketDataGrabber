@@ -106,6 +106,8 @@ profile bot:
   telegram-bot      # отчёты и рыночные сигналы (P3), кнопки исполнения (P6); aiogram
   redis             # cooldown алертов, pending-подтверждения сделок (TTL), кэш словарей
   sqlite (volume)   # конфиги: users, subscriptions, quiet hours
+profile mcp (P3.5):
+  mcp               # FastMCP, Streamable HTTP: public/private инструменты, ключи, audit
 profile web (позже):
   api               # FastAPI: бэкенд HTML-страницы (/candles, /fundamentals, /signals) + админ-эндпоинты
 profile live (P6):
@@ -143,6 +145,18 @@ profile live (P6):
 
 - **Сейчас:** Grafana + ClickHouse-плагин: свечи/объёмы/мультипликаторы/консенсус, логи (Explore), алерты — всё в одном окне; дашборды хранятся как JSON в git (provisioning).
 - **Позже:** своя HTML-страница (лёгкий FastAPI + plotly) под кастомный UX — отдельным сервисом в том же compose.
+
+### MCP-сервер (решено: одна ступень, полная версия после P3)
+
+Любой агент (Hermes, Claude, кастомные) получает данные через MCP-инструменты, без SQL-доступа к ClickHouse.
+
+- **Реализация:** Python, официальный SDK `mcp` (FastMCP), транспорт **Streamable HTTP**; сервис `mcp` в compose (профиль `mcp`), наружу через reverse proxy с TLS.
+- **Доступ:** API-ключи; таблица `mcp_keys(key_hash sha256, user_id, scope, created, revoked)` — храним только хэши. Audit-лог `mcp_audit(ts, key_id, tool, params, rows_returned)`. Rate-limit на ключ.
+- **Read-only по построению:** у MCP-сервера нет write-методов вообще; ClickHouse-пользователь `mdg_readonly` с `GRANT SELECT` только на `market_data_gold.*`, `events`, `fundamentals_snapshots` (не bronze).
+- **Граница public/private (решено):**
+  - **public** (без ключа): витрины gold (свечи ТФ, дневные метрики), календарь сессий, события, фундаментал; инструменты: `list_instruments`, `get_candles`, `get_daily_metrics`, `get_events`, `get_fundamentals`;
+  - **private** (по ключу scope=private): сигналы (P4), подписки, история уведомлений пользователя; фильтрация по user_id на уровне инструментов.
+- **Контракт данных:** экспонируем только gold-слой (стабильная схема), не bronze. Point-in-time предупреждение в описаниях (фундаментал с момента P2).
 
 ## Слои обработки данных (медальон, решено)
 
@@ -184,6 +198,7 @@ profile live (P6):
 - **P1. Бэкофилл:** годовые архивы минуток по 5 инструментам + дневные свечи `GetCandles` → bronze; отчёт о дырах; проверка конвенции вечерней сессии и расхождений 1m vs 1d.
 - **P2. Инкремент + витрины:** ежедневный DAG в scheduler (fetch → silver clean → gold marts → dq → notify); обновление свечей всех ТФ после закрытия/клиринга; ежедневный снапшот `GetAssetFundamentals`; сбор родных событий (календарь сессий, дивиденды, экспирации, отчётности, консенсус-прогнозы); silver/gold трансформации + `etl_runs`/`dq_metrics`, DQ-шаги с карантином.
 - **P3. Отчёт:** Telegram-дайджест по universe (цена, объём vs средний, ключевые индикаторы, P/E и другие мультипликаторы, ожидаемая доходность по консенсусу, ближайшие события — отчёты и ex-dividend); Grafana-дашборды (свечи, объёмы, фундаментал) + алерты obs-профиля; бот: разделение ops/market, таблица подписок (пока только админ), redis-профиль (cooldown).
+- **P3.5 MCP-сервер:** FastMCP + Streamable HTTP, ключи (public/private), read-only CH-пользователь, audit-лог; инструменты над gold-витринами. Пререквизит: подписки и ключи из P3.
 - **P4. Сигналы:** volume spike, пробой диапазона, MA crossover, RSI — с частотной валидацией на истории; макрокалендарь (еженедельный скрейпинг) как контекст.
 - **P5. Бэктест:** прогон сигналов по истории, оценка без lookahead bias.
 - **P6. Полуавтомат + live:** trade-токен, inline-кнопки «исполнить» с pending-подтверждением в Redis (TTL ~60 сек), guardrails (лимиты суммы, только chat_id владельца); live-стриминг с отдельным хранилищем ~1 день, сэмплирование стакана раз в минуту.
