@@ -95,3 +95,27 @@ CREATE TABLE IF NOT EXISTS market_data_aux.quarantine (
     raw        String                     -- исходная строка как есть
 ) ENGINE = MergeTree
 ORDER BY (ts, table_name);
+
+-- ============================================================
+-- MCP: ключи доступа и аудит вызовов
+-- ============================================================
+CREATE TABLE IF NOT EXISTS market_data_aux.mcp_keys (
+    key_hash    FixedString(64),            -- SHA256 hex ключа (сам ключ не хранится)
+    owner       LowCardinality(String),
+    public_only UInt8 DEFAULT 1,
+    revoked     UInt8 DEFAULT 0,
+    created_at  DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree
+ORDER BY key_hash;
+
+CREATE TABLE IF NOT EXISTS market_data_aux.mcp_audit (
+    ts          DateTime DEFAULT now(),
+    key_hash    FixedString(64),
+    tool        LowCardinality(String),
+    args        String DEFAULT '',
+    rows        UInt32 DEFAULT 0,
+    duration_ms UInt32 DEFAULT 0,
+    ok          UInt8 DEFAULT 1
+) ENGINE = MergeTree
+ORDER BY (ts, key_hash)
+TTL toDateTime(ts) + INTERVAL 90 DAY;
