@@ -11,6 +11,8 @@ dependencies = [
     "structlog>=24.1",
     "clickhouse-connect>=0.7",
     "python-dotenv>=1.0",
+    "mcp>=1.2.0,<2",
+    "uvicorn>=0.30",
 ]
 
 [project.optional-dependencies]
