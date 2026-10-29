@@ -14,6 +14,14 @@ if ROOT not in sys.path:
 import scripts.run_signals as rs  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def _tmp_users_db(tmp_path, monkeypatch):
+    """Изоляция: init_db в main() пишет в tmp, а не в живой data/bot.sqlite."""
+    from mdgrabber import users as users_mod
+
+    monkeypatch.setattr(users_mod, "DB_PATH", tmp_path / "test-users.sqlite")
+
+
 def make_signal(ticker: str, signal_type: str = "rsi_overbought", bar_date="2026-10-28"):
     return {
         "instrument_uid": f"uid-{ticker}",
