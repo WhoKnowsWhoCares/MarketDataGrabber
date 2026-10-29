@@ -79,12 +79,50 @@ def filter_calibrated(signals: list[dict]) -> tuple[list[dict], int]:
     return deliverable, len(signals) - len(deliverable)
 
 
-def format_message(signals: list[dict]) -> str:
+def format_message(signals: list[dict], settings: Settings | None = None) -> str:
     """HTML-сообщение со списком сигналов, <b>тикер</b> в заголовках."""
     lines = [f"🔔 <b>Новые сигналы</b> ({len(signals)}):"]
     for s in signals:
         lines.append(f"• <b>{s['ticker']}</b> [{s['signal_type']}] {s['bar_date']}: {s['message']}")
     return "\n".join(lines)
+
+
+def format_message_with_trade_buttons(signals: list[dict], settings: Settings) -> tuple[str, dict | None]:
+    """HTML-сообщение с inline-кнопками исполнения для bullish-сигналов.
+    
+    Возвращает (текст, reply_markup_dict или None).
+    Кнопки только для ma_cross_up и rsi_oversold, если SHOW_TRADE_BUTTONS=1.
+    """
+    if not getattr(settings, "show_trade_buttons", False):
+        return format_message(signals), None
+    
+    # Bullish signals that get trade buttons
+    bullish_types = {"ma_cross_up", "rsi_oversold"}
+    
+    lines = [f"🔔 <b>Новые сигналы</b> ({len(signals)}):"]
+    keyboard_rows = []
+    
+    for s in signals:
+        lines.append(f"• <b>{s['ticker']}</b> [{s['signal_type']}] {s['bar_date']}: {s['message']}")
+        
+        # Добавляем кнопку для bullish-сигналов
+        if s["signal_type"] in bullish_types:
+            # callback_data: trade:signal:{ticker}:{bar_date}
+            bar_date = str(s["bar_date"])
+            callback_id = f"{s['ticker']}:{bar_date}"
+            keyboard_rows.append([{
+                "text": f"⚡ Исполнить: BUY 1 {s['ticker']} (SANDBOX)",
+                "callback_data": f"trade:signal:{callback_id}"
+            }])
+    
+    text = "\n".join(lines)
+    
+    if keyboard_rows:
+        reply_markup = {
+            "inline_keyboard": keyboard_rows
+        }
+        return text, reply_markup
+    return text, None
 
 
 def annotation_payload(signal: dict) -> dict:
@@ -120,6 +158,10 @@ def broadcast(settings: Settings, signals: list[dict], dry_run: bool = False) ->
     Подписчиков нет → один market-получатель: админ, текст с пометкой
     "(нет подписчиков)".
     """
+    # Создаем pending в Redis для сигналов с кнопками (если не dry-run)
+    if not dry_run and getattr(settings, "show_trade_buttons", False):
+        _create_signal_pending(settings, signals)
+
     subscribers = list_subscribers()
     if subscribers:
         plan = [
@@ -142,15 +184,75 @@ def broadcast(settings: Settings, signals: list[dict], dry_run: bool = False) ->
         return plan
 
     for chat_id, msgs in plan:
+        text, reply_markup = format_message_with_trade_buttons(msgs, settings)
+        text = text + suffix
         send_telegram(
             settings,
-            text=format_message(msgs) + suffix,
+            text=text,
             category="market",
             chat_id=chat_id,
             parse_mode="HTML",
+            reply_markup=reply_markup,
         )
         log.info("sent", chat_id=chat_id, signals=len(msgs))
     return plan
+
+
+def _create_signal_pending(settings: Settings, signals: list[dict]) -> None:
+    """Создает pending-записи в Redis для сигналов с кнопками исполнения.
+    
+    Ключ: trade:pending:{chat_id}:{ticker}:{bar_date}
+    TTL: 60 секунд.
+    """
+    bullish_types = {"ma_cross_up", "rsi_oversold"}
+    signals_with_buttons = [s for s in signals if s["signal_type"] in bullish_types]
+    if not signals_with_buttons:
+        return
+
+    # Получаем FIGI для каждого тикера
+    instruments_path = Path(__file__).resolve().parents[1] / "config" / "instruments.json"
+    try:
+        instruments_data = json.loads(instruments_path.read_text(encoding="utf-8"))
+    except Exception:
+        log.warning("Не удалось прочитать instruments.json для pending")
+        return
+
+    # Получаем admin chat_id (для случая если нет подписчиков)
+    admin_chat_id = str(settings.admin_chat_id)
+
+    try:
+        import redis
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        r = redis.from_url(redis_url, socket_connect_timeout=2, socket_timeout=2)
+        
+        # Для каждого чата (подписчика или админа) создаем pending
+        subscribers = list_subscribers()
+        chat_ids = subscribers if subscribers else [admin_chat_id]
+        
+        for chat_id in chat_ids:
+            for s in signals_with_buttons:
+                ticker = s["ticker"]
+                bar_date = str(s["bar_date"])
+                
+                info = instruments_data.get(ticker.upper())
+                if not info:
+                    continue
+                figi = info.get("figi") or info.get("uid")
+                if not figi:
+                    continue
+                
+                signal_key = f"{ticker}:{bar_date}"
+                pending_key = f"trade:pending:{chat_id}:{signal_key}"
+                order_data = {
+                    "figi": figi,
+                    "ticker": ticker,
+                    "direction": "buy",  # сигналы всегда BUY
+                    "lots": 1,
+                    "chat_id": chat_id,
+                }
+                r.setex(pending_key, 60, json.dumps(order_data))
+    except Exception as exc:
+        log.warning("Redis недоступен, pending для сигналов не создан: %s", exc)
 
 
 def record_run(client, status: str, rows: int, started_at: datetime) -> None:

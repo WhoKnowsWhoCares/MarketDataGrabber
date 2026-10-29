@@ -39,6 +39,7 @@ class Settings:
     t_invest_sandbox_account_id: str
     trade_mode: str
     trade_max_lots: int
+    show_trade_buttons: bool
 
     @classmethod
     def load(cls) -> "Settings":
@@ -72,6 +73,7 @@ class Settings:
             t_invest_sandbox_account_id=os.getenv("T_INVEST_SANDBOX_ACCOUNT_ID", ""),
             trade_mode=os.getenv("TRADE_MODE", "sandbox"),
             trade_max_lots=int(os.getenv("TRADE_MAX_LOTS", "1")),
+            show_trade_buttons=os.getenv("SHOW_TRADE_BUTTONS", "0") == "1",
         )
 
     def masked(self) -> dict:
