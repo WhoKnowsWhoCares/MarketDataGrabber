@@ -34,6 +34,11 @@ class Settings:
     mcp_port: int
     mcp_bind_ip: str
     mcp_smoke_key: str
+    trade_base_url: str
+    t_invest_sandbox_token: str
+    t_invest_sandbox_account_id: str
+    trade_mode: str
+    trade_max_lots: int
 
     @classmethod
     def load(cls) -> "Settings":
@@ -59,6 +64,14 @@ class Settings:
             mcp_port=int(os.getenv("MCP_PORT", "8900")),
             mcp_bind_ip=os.getenv("MCP_BIND_IP", "0.0.0.0"),
             mcp_smoke_key=os.getenv("MCP_SMOKE_KEY", ""),
+            # Торговля (P6): sandbox-клиент T-Invest. Live будет позже, отдельным флагом.
+            trade_base_url=os.getenv(
+                "TRADE_BASE_URL", "https://sandbox-invest-public-api.tinkoff.ru/rest"
+            ),
+            t_invest_sandbox_token=os.getenv("T_INVEST_SANDBOX_TOKEN", ""),
+            t_invest_sandbox_account_id=os.getenv("T_INVEST_SANDBOX_ACCOUNT_ID", ""),
+            trade_mode=os.getenv("TRADE_MODE", "sandbox"),
+            trade_max_lots=int(os.getenv("TRADE_MAX_LOTS", "1")),
         )
 
     def masked(self) -> dict:
