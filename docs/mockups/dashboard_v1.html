@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>MarketData — макет дашборда v1</title>
+<style>
+  :root {
+    --bg: #111217; --panel: #181b1f; --panel2: #1f2226; --border: #2c3038;
+    --text: #ccccdc; --muted: #8e8e9a; --blue: #5794f2; --green: #73bf69;
+    --red: #f2495c; --yellow: #fade2a; --purple: #b877d9; --orange: #ff9830;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 13px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif; padding: 16px; }
+  h1 { font-size: 17px; margin-bottom: 2px; }
+  .sub { color: var(--muted); font-size: 11.5px; margin-bottom: 14px; }
+  .controls { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; }
+  .ctl { background: var(--panel2); border: 1px solid var(--border); border-radius: 4px; padding: 5px 12px; font-size: 12px; color: var(--text); }
+  .ctl.active { border-color: var(--blue); color: #fff; }
+  .row { margin-bottom: 16px; }
+  .rowtitle { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 6px 2px; }
+  .grid { display: grid; gap: 8px; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; }
+  .ptitle { font-size: 11.5px; color: var(--muted); margin-bottom: 8px; }
+  .pvalue { font-size: 26px; font-weight: 600; }
+  .insight { margin-top: 8px; font-size: 11px; color: var(--muted); border-left: 2px solid var(--blue); padding-left: 8px; }
+  .insight b { color: var(--text); font-weight: 600; }
+  .up { color: var(--green); } .down { color: var(--red); } .warn { color: var(--yellow); }
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 10.5px; font-weight: 600; }
+  .b-green { background: rgba(115,191,105,.15); color: var(--green); }
+  .b-red { background: rgba(242,73,92,.15); color: var(--red); }
+  .b-yellow { background: rgba(250,222,42,.12); color: var(--yellow); }
+  .b-gray { background: rgba(140,140,150,.15); color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; color: var(--muted); font-weight: 500; padding: 4px 8px; border-bottom: 1px solid var(--border); }
+  td { padding: 5px 8px; border-bottom: 1px solid var(--border); }
+  svg { display: block; width: 100%; }
+  .legend { display: flex; gap: 14px; font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+  .note { background: rgba(87,148,242,.08); border: 1px solid rgba(87,148,242,.3); border-radius: 4px; padding: 8px 12px; font-size: 11.5px; color: var(--muted); margin-bottom: 14px; }
+</style>
+</head>
+<body>
+<h1>MarketData — Overview</h1>
+<div class="sub">макет v1 · данные: ClickHouse (mart_daily_metrics, events, fundamentals) · 2026-10-27</div>
+
+<div class="controls">
+  <span class="ctl active">SBER</span><span class="ctl">GAZP</span><span class="ctl">CNYRUBF</span><span class="ctl">IMOEXF</span><span class="ctl">IBZ6</span>
+  <span style="flex:1"></span>
+  <span class="ctl">Last 30 days</span>
+</div>
+
+<div class="row">
+  <div class="rowtitle">Ряд 0 — Health: «Системе можно доверять?»</div>
+  <div class="grid" style="grid-template-columns: repeat(3, 1fr)">
+    <div class="panel"><div class="ptitle">Свежесть данных</div><div class="pvalue up">✅ свежие</div><div class="insight">минутки 11:44 UTC · дневки за 2026-10-27</div></div>
+    <div class="panel"><div class="ptitle">DQ проверки</div><div class="pvalue up">OK · 0 нарушений</div><div class="insight">gap_vs_calendar = 0 · OHLC чисто</div></div>
+    <div class="panel"><div class="ptitle">Витрины</div><div class="pvalue up">обновлены</div><div class="insight">mart_daily_metrics: 2026-10-27</div></div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="rowtitle">Ряд 1 — Состояние: «Что произошло сегодня?»</div>
+  <div class="grid" style="grid-template-columns: repeat(5, 1fr)">
+    <div class="panel"><div class="ptitle">SBER</div><div class="pvalue">299.44</div><span class="badge b-green">+1.16%</span> <span class="badge b-yellow">RSI 75 ↑</span></div>
+    <div class="panel"><div class="ptitle">GAZP</div><div class="pvalue">118.51</div><span class="badge b-green">+3.63%</span> <span class="badge b-yellow">RSI 78 ↑</span></div>
+    <div class="panel"><div class="ptitle">CNYRUBF</div><div class="pvalue">12.06</div><span class="badge b-red">−0.26%</span> <span class="badge b-red">RSI 20 ↓</span></div>
+    <div class="panel"><div class="ptitle">IMOEXF</div><div class="pvalue">2530.50</div><span class="badge b-green">+1.50%</span> <span class="badge b-gray">RSI 68</span></div>
+    <div class="panel"><div class="ptitle">IBZ6</div><div class="pvalue">45.72</div><span class="badge b-green">+4.38%</span> <span class="badge b-gray">RSI 35</span></div>
+  </div>
+  <div class="insight" style="margin-top:6px">Вывод: <b>акции в перекупленности</b> (RSI>70) — риск отката; CNYRUBF у перепроданности. IBZ6 +4.4% — лидер дня.</div>
+</div>
+
+<div class="row">
+  <div class="rowtitle">Ряд 2 — Тренд: «Куда движется инструмент?» (SBER)</div>
+  <div class="panel">
+    <div class="ptitle">Close + MA20 + MA50 · 30 дней</div>
+    <svg id="trend" viewBox="0 0 900 220"></svg>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--blue)"></span>Close</span>
+      <span><span class="dot" style="background:var(--yellow)"></span>MA20</span>
+      <span><span class="dot" style="background:var(--purple)"></span>MA50</span>
+    </div>
+    <div class="insight">Вывод: <b>close выше MA20 и MA50</b> — восходящий тренд; пересечение close↔MA20 = ранний сигнал смены.</div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="rowtitle">Ряд 3 — Объём: «Движение подтверждено?» (SBER)</div>
+  <div class="grid" style="grid-template-columns: 3fr 1fr">
+    <div class="panel">
+      <div class="ptitle">Volume vs MA20 · жёлтая метка = ratio &gt; 2</div>
+      <svg id="volume" viewBox="0 0 900 160"></svg>
+      <div class="legend"><span><span class="dot" style="background:var(--blue)"></span>Volume</span><span><span class="dot" style="background:var(--yellow)"></span>MA20</span></div>
+    </div>
+    <div class="panel"><div class="ptitle">Volume Ratio (сегодня)</div><div class="pvalue">0.86×</div><div class="insight">объём <b>ниже среднего</b> — движения без подтверждения</div></div>
+  </div>
+  <div class="insight" style="margin-top:6px">Вывод: рост цены при ratio &gt; 2 = <b>подтверждённое движение</b>; рост без объёма — слабое, игнорировать сигналом.</div>
+</div>
+
+<div class="row">
+  <div class="rowtitle">Ряд 4 — Риск: «Не поздно ли входить?» (SBER)</div>
+  <div class="grid" style="grid-template-columns: 3fr 1fr">
+    <div class="panel">
+      <div class="ptitle">RSI14 · зоны 30/70</div>
+      <svg id="rsi" viewBox="0 0 900 150"></svg>
+    </div>
+    <div class="panel"><div class="ptitle">ATR14 (ожидаемый размах)</div><div class="pvalue">6.9 ₽</div><div class="insight">≈ <b>2.3%</b> от цены — нормальная волатильность</div></div>
+  </div>
+  <div class="insight" style="margin-top:6px">Вывод: RSI 75 = <b>вход в перекупленности — риск</b>; ATR задаёт стоп-дистанцию.</div>
+</div>
+
+<div class="row">
+  <div class="rowtitle">Ряд 5 — Контекст: «Что качнёт цену завтра?»</div>
+  <div class="grid" style="grid-template-columns: 3fr 2fr">
+    <div class="panel">
+      <div class="ptitle">Ближайшие события</div>
+      <table>
+        <tr><th>Дата</th><th>Тип</th><th>Инструмент</th></tr>
+        <tr><td>2026-10-28</td><td><span class="badge b-gray">report</span></td><td>SBER</td></tr>
+        <tr><td>2026-12-21</td><td><span class="badge b-gray">expiry</span></td><td>IBZ6</td></tr>
+      </table>
+      <div class="insight">Отчёт SBER <b>завтра</b> — ждать повышенную волатильность; после экс-дивиденда — гэп.</div>
+    </div>
+    <div class="panel">
+      <div class="ptitle">P/E TTM (акции)</div>
+      <svg id="pe" viewBox="0 0 300 120"></svg>
+      <div class="insight">SBER 3.45 vs GAZP 2.16 — <b>обе дёшевы</b> относительно исторических уровней.</div>
+    </div>
+  </div>
+</div>
+
+<div class="note">💡 Общая логка чтения: Ряд 0 → доверяем ли данным · Ряд 1 → что случилось · Ряды 2–4 → подтверждение тренда объёмом и оценка риска входа · Ряд 5 → известные будущие катализаторы. Переключатель инструмента сверху меняет ряды 2–4.</div>
+
+<script>
+const S = [[["2026-09-26", 276.54, 279.51, 277.64, 552592, 17659434.0, 35.5, 4.2], ["2026-09-27", 276.75, 279.3, 277.48, 888557, 17540931.0, 38.2, 3.89], ["2026-09-28", 272.45, 279.07, 277.18, 24247686, 18496216.0, 23.0, 3.81], ["2026-09-29", 274.65, 278.8, 276.98, 18505319, 18803265.0, 31.3, 3.94], ["2026-09-30", 273.92, 278.53, 276.8, 11950633, 18217104.0, 37.0, 3.67], ["2026-10-01", 276.18, 278.49, 276.65, 22103506, 18327781.0, 50.7, 3.51], ["2026-10-02", 275.45, 278.01, 276.48, 13432967, 17069535.0, 47.0, 3.49], ["2026-10-03", 275.27, 277.61, 276.3, 670007, 15385363.0, 48.5, 3.45], ["2026-10-04", 275.79, 277.02, 276.09, 883525, 14080002.0, 50.5, 3.49], ["2026-10-05", 281.77, 276.87, 276.05, 39898612, 14963894.0, 58.9, 3.73], ["2026-10-06", 282.22, 276.98, 276.14, 22099060, 14408585.0, 53.3, 3.62], ["2026-10-07", 283.04, 277.34, 276.33, 21950101, 13622088.0, 55.0, 3.5], ["2026-10-08", 280.44, 277.52, 276.52, 24699815, 14115928.0, 52.3, 3.64], ["2026-10-09", 285.02, 277.98, 276.67, 25889129, 15364641.0, 66.8, 3.68], ["2026-10-10", 286.0, 278.5, 276.86, 8994384, 15765818.0, 67.8, 3.78], ["2026-10-11", 285.84, 278.93, 277.16, 7686460, 15535998.0, 67.2, 4.01], ["2026-10-12", 285.29, 279.15, 277.4, 17181677, 15374474.0, 78.2, 3.87], ["2026-10-13", 287.16, 279.47, 277.7, 26998547, 15910597.0, 77.9, 3.7], ["2026-10-14", 285.52, 279.78, 277.99, 32381203, 16929364.0, 74.9, 3.72], ["2026-10-15", 283.63, 280.15, 278.27, 17517286, 16926553.0, 66.2, 3.64], ["2026-10-16", 287.29, 280.68, 278.58, 24954201, 18146634.0, 72.9, 3.76], ["2026-10-17", 287.48, 281.22, 278.98, 1656520, 18185032.0, 73.6, 3.76], ["2026-10-18", 287.08, 281.95, 279.32, 2174077, 17081351.0, 71.9, 3.75], ["2026-10-19", 290.7, 282.75, 279.78, 36293649, 17970768.0, 69.1, 3.62], ["2026-10-20", 293.45, 283.73, 280.27, 25893463, 18667909.0, 71.8, 3.66], ["2026-10-21", 291.62, 284.5, 280.73, 29830986, 19054283.0, 66.1, 3.78], ["2026-10-22", 291.2, 285.29, 281.03, 12390708, 19002170.0, 71.9, 3.64], ["2026-10-23", 292.32, 286.14, 281.44, 22943017, 20115821.0, 67.3, 3.62], ["2026-10-26", 296.0, 287.15, 281.87, 21909092, 21167099.0, 71.0, 3.82], ["2026-10-27", 299.44, 288.04, 282.28, 17301256, 20037232.0, 75.1, 3.88]]];
+
+function line(id, series, color, w=900, h=220, pad=12, y0=null, y1=null) {
+  const svg = document.getElementById(id);
+  const vals = series.map(r => r[1]).filter(v => v != null);
+  const min = y0 ?? Math.min(...vals), max = y1 ?? Math.max(...vals);
+  const X = i => pad + i * (w - 2*pad) / (series.length - 1);
+  const Y = v => h - pad - (v - min) * (h - 2*pad) / (max - min || 1);
+  svg.innerHTML = `<polyline fill="none" stroke="${color}" stroke-width="2" points="${series.map((r,i)=>X(i)+','+Y(r[1])).join(' ')}"/>`;
+  return {X, Y, svg, min, max};
+}
+
+// Ряд 2: close + MA20 + MA50
+const t = line('trend', S, 'var(--blue)');
+{
+  const {X, Y, svg, min, max} = t, w=900, h=220, pad=12;
+  const ma20 = S.map((r,i)=>X(i)+','+Y(r[2] ?? min)).join(' ');
+  const ma50 = S.map((r,i)=>X(i)+','+Y(r[3] ?? min)).join(' ');
+  svg.innerHTML += `<polyline fill="none" stroke="var(--yellow)" stroke-width="1.5" points="${ma20}"/>`;
+  svg.innerHTML += `<polyline fill="none" stroke="var(--purple)" stroke-width="1.5" points="${ma50}"/>`;
+  // последняя цена
+  const li = S.length-1;
+  svg.innerHTML += `<circle cx="${X(li)}" cy="${Y(S[li][1])}" r="3.5" fill="var(--blue)"/>`;
+}
+
+// Ряд 3: объём барами + MA20 линией
+{
+  const svg = document.getElementById('volume');
+  const w=900, h=160, pad=12;
+  const maxV = Math.max(...S.map(r => Math.max(r[4], r[5]||0))) * 1.1;
+  const bw = (w-2*pad)/S.length * 0.6;
+  const H = v => (h-pad) - v*(h-2*pad)/maxV;
+  let bars = '';
+  S.forEach((r,i) => {
+    const x = pad + i*(w-2*pad)/S.length + bw*0.3;
+    const ratio = r[5] ? r[4]/r[5] : 0;
+    const col = ratio > 2 ? 'var(--yellow)' : 'rgba(87,148,242,.55)';
+    bars += `<rect x="${x}" y="${H(r[4])}" width="${bw}" height="${h-pad-H(r[4])}" fill="${col}"/>`;
+  });
+  const ma = S.map((r,i)=>pad + i*(w-2*pad)/S.length + bw*0.55 + ',' + H(r[5]||0)).join(' ');
+  svg.innerHTML = bars + `<polyline fill="none" stroke="var(--yellow)" stroke-width="1.5" points="${ma}"/>`;
+}
+
+// Ряд 4: RSI с зонами
+{
+  const svg = document.getElementById('rsi');
+  const w=900, h=150, pad=10;
+  const X = i => pad + i*(w-2*pad)/(S.length-1);
+  const Y = v => h-pad - v*(h-2*pad)/100;
+  const zone = (a,b,col) => `<rect x="${pad}" y="${Y(b)}" width="${w-2*pad}" height="${Y(a)-Y(b)}" fill="${col}"/>`;
+  svg.innerHTML = zone(70,100,'rgba(242,73,92,.08)') + zone(0,30,'rgba(115,191,105,.08)');
+  svg.innerHTML += `<line x1="${pad}" y1="${Y(70)}" x2="${w-pad}" y2="${Y(70)}" stroke="var(--red)" stroke-dasharray="4 3" stroke-width="1"/>`;
+  svg.innerHTML += `<line x1="${pad}" y1="${Y(30)}" x2="${w-pad}" y2="${Y(30)}" stroke="var(--green)" stroke-dasharray="4 3" stroke-width="1"/>`;
+  svg.innerHTML += `<polyline fill="none" stroke="var(--purple)" stroke-width="2" points="${S.map((r,i)=>X(i)+','+Y(r[6]??50)).join(' ')}"/>`;
+}
+
+// Ряд 5: P/E барами
+{
+  const svg = document.getElementById('pe');
+  const w=300, h=120, pad=14;
+  const data = [['SBER',3.45],['GAZP',2.16]];
+  const max = Math.max(...data.map(x=>x[1]))*1.25;
+  data.forEach(([n,v],i) => {
+    const bw = 52, x = pad + i*130;
+    const bh = v*(h-2*pad)/max;
+    svg.innerHTML += `<rect x="${x}" y="${h-pad-bh}" width="${bw}" height="${bh}" fill="rgba(87,148,242,.6)"/>`;
+    svg.innerHTML += `<text x="${x+bw/2}" y="${h-pad-bh-5}" fill="var(--text)" font-size="12" text-anchor="middle">${v}</text>`;
+    svg.innerHTML += `<text x="${x+bw/2}" y="${h-2}" fill="var(--muted)" font-size="11" text-anchor="middle">${n}</text>`;
+  });
+}
+</script>
+</body>
+</html>

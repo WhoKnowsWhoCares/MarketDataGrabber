@@ -1,13 +1,31 @@
 ---
 tags: [project, market-data, trading, tinkoff]
 created: 2026-10-25
-status: brainstorm-approved
+updated: 2026-10-29
+status: in-progress (P0–P4 done)
 workspace: /opt/data/workspace/MarketData
 github: https://github.com/WhoKnowsWhoCares/MarketDataGrabber
 ---
 # MarketData — Спецификация проекта
 
 Личная система сбора рыночных данных через T-Invest API (Т-Банк): накопление истории, аналитика, торговые сигналы и рекомендации пользователю с возможностью полуавтоматического исполнения.
+
+## Прогресс (2026-10-29)
+
+| Фаза | Статус | Ключевые артефакты |
+|---|---|---|
+| P0 Пререквизиты | ✅ done (10-27) | compose (CH 24.8, профили), schema bronze/aux, пакет mdgrabber, tinvest-клиент, notify |
+| P1 Бэкофилл | ✅ done (10-27) | 5.29M минуток + 5.4K дневок за 6 лет, reconcile, gap-отчёт |
+| P2 Инкремент+витрины | ✅ done (10-28) | инкремент 1m/1d, события (дивиденды с 2010, экспирации, календарь), фундаментал 54 поля, gold-витрина + DQ |
+| P3 Отчёт | ✅ done (10-28) | дайджест, бот (aiogram3, подписки SQLite, Redis cooldown), Grafana 13 панелей, watchdog |
+| P3.5 MCP | ✅ done (10-29) | FastMCP :8900, 5 read-only инструментов, mdg_ro, ключи (SHA256), mcp_audit |
+| P3.6 Расписание | ✅ done (10-29) | crontab 8 задач (МСК), всё через docker (host python3.12 сломан — `_asyncio` segfault) |
+| P4 Сигналы | ✅ done (10-29) | 7 типов детекции, дедуп 30 дней, доставка по подпискам, Grafana-аннотации; первый прогон: 5 сигналов доставлено |
+| P5 Бэктест | ⬜ | — |
+| P6 Полуавтомат + live | ⬜ | Redis pending-orders готов |
+| P7 Веб | ⬜ | — |
+
+Отклонения от спеки: scheduler-сервис (APScheduler) заменён на host-crontab + mdg-jobs контейнер; лoki/promtail отложены; broadcast сигналов доставляет все sent=0 (самовосстановление). Дашборд: дропдаун инструментов — тикеры (не uid), trading_day в таблице событий скрыт.
 
 ## Problem Statement
 
@@ -212,8 +230,8 @@ profile live (P6):
 - [x] `/history-data` работает **только с параметром `figi`** (с `instrument_id`/uid → HTTP 400); SBER 2024 = ZIP 3.4 MB минуток
 - [x] Telegram: `api.telegram.org` напрямую недоступен (TCP timeout) — работает только через SOCKS-прокси `socks5h://172.21.0.1:10808` (docker-шлюз); бот @Trade4MeAIBot, getMe ok
 - [x] TLS на хосте перехватывается MITM-прокси → все HTTP-клиенты с `TLS_VERIFY=false` (переменная в .env)
-- [ ] `ADMIN_CHAT_ID`: sendMessage → «chat not found» — владельцу нужно написать боту @Trade4MeAIBot `/start`
-- [ ] ClickHouse/Grafana пароли заданы в .env — проверка при старте контейнеров (P0)
+- [x] `ADMIN_CHAT_ID`: sendMessage → «chat not found» — владельцу нужно написать боту @Trade4MeAIBot `/start`
+- [x] ClickHouse/Grafana пароли заданы в .env — проверка при старте контейнеров (P0)
 
 ### Прочие допущения
 
