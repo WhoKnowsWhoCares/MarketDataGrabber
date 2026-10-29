@@ -198,10 +198,19 @@ def test_main_no_new_signals_is_silent_success(monkeypatch):
             pass
 
         def query(self, sql):
-            # persist_new видит существующий сигнал → дедуп
-            def rows():
-                yield {"instrument_uid": "uid-SBER", "signal_type": "rsi_overbought",
-                       "bar_date": datetime(2026, 10, 28)}
+            # persist_new видит существующий сигнал → дедуп;
+            # fetch_unsent (sent=0) видит пусто — всё уже доставлено
+            if "sent = 0" in sql:
+                existing = ()
+            else:
+                existing = (
+                    {"instrument_uid": "uid-SBER", "signal_type": "rsi_overbought",
+                     "bar_date": datetime(2026, 10, 28)},
+                )
+
+            def rows(existing=existing):
+                yield from existing
+
             return SimpleNamespace(named_results=rows)
 
     monkeypatch.setattr(rs, "Settings", SimpleNamespace(load=lambda: settings))

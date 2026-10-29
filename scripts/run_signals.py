@@ -38,6 +38,7 @@ from mdgrabber.signals import (  # noqa: E402
     detect_signals,
     mark_sent,
     persist_new,
+    fetch_unsent,
 )
 from mdgrabber.users import init_db, list_subscribers, list_subscriptions  # noqa: E402
 
@@ -187,7 +188,10 @@ def main(argv: list[str] | None = None) -> int:
         persist_new(client, signals)  # новые сохраняем, дедуп рассылки игнорируем
         fresh = signals
     else:
-        fresh = persist_new(client, signals)
+        persist_new(client, signals)
+        # доставляем всё, что сохранено, но ещё не доставлено (sent=0):
+        # покрывает и свежие сигналы, и «застрявшие» после dry-run/сбоя доставки
+        fresh = fetch_unsent(client)
 
     if not fresh:
         log.info("no new signals", detected=len(signals))
