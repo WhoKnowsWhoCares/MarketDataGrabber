@@ -119,3 +119,18 @@ CREATE TABLE IF NOT EXISTS market_data_aux.mcp_audit (
 ) ENGINE = MergeTree
 ORDER BY (ts, key_hash)
 TTL toDateTime(ts) + INTERVAL 90 DAY;
+
+-- ============================================================
+-- Сигналы: результат работы движка детекции (P4.1)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS market_data_aux.signals (
+    ts            DateTime DEFAULT now(),
+    instrument_uid LowCardinality(String),
+    ticker        LowCardinality(String),
+    signal_type   LowCardinality(String),  -- rsi_overbought | rsi_oversold | volume_spike | ma_cross_up | ma_cross_down | golden_cross | death_cross
+    bar_date      Date,
+    value         Float64,
+    message       String,
+    sent          UInt8 DEFAULT 0          -- 1 = доставлено в Telegram (ставит рантайм)
+) ENGINE = ReplacingMergeTree
+ORDER BY (instrument_uid, signal_type, bar_date);
