@@ -126,6 +126,23 @@ def add_subscription(chat_id: str, instrument: str, signal_type: str) -> None:
         conn.close()
 
 
+def list_subscriptions(chat_id: str) -> list[dict]:
+    """Подписки пользователя: [{instrument, signal_type, min_importance}, ...]."""
+    user = get_user(str(chat_id))
+    if user is None:
+        return []
+    conn = _connect()
+    try:
+        rows = conn.execute(
+            "SELECT instrument, signal_type, min_importance "
+            "FROM subscriptions WHERE user_id = ?",
+            (user["user_id"],),
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
 def remove_subscription(chat_id: str, instrument: Optional[str] = None) -> int:
     """Удалить подписку. Если instrument=None — все подписки пользователя."""
     user = get_user(str(chat_id))

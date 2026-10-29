@@ -158,6 +158,32 @@ def mark_sent(client, signals: list[dict]) -> None:
     client.command(_insert_sql(signals, sent=1))
 
 
+def fetch_unsent(client) -> list[dict]:
+    """Сигналы, сохранённые, но ещё не доставленные (sent=0).
+
+    Рантайм доставляет именно их — это делает систему самовосстанавливающейся:
+    сигналы, persist'нутые dry-run'ом или при упавшей доставке, уходят при
+    следующем живом запуске.
+    """
+    rows = client.query(
+        f"SELECT instrument_uid, ticker, signal_type, bar_date, value, message "
+        f"FROM {SIGNALS_TABLE} FINAL WHERE sent = 0"
+    ).named_results()
+    out: list[dict] = []
+    for r in rows:
+        out.append(
+            {
+                "instrument_uid": r["instrument_uid"],
+                "ticker": r["ticker"],
+                "signal_type": r["signal_type"],
+                "bar_date": r["bar_date"],
+                "value": float(r["value"]),
+                "message": r["message"],
+            }
+        )
+    return out
+
+
 def _insert_sql(signals: list[dict], sent: int) -> str:
     values = ",\n".join(
         f"({_row_ts()}, {_q(s['instrument_uid'])}, {_q(s['ticker'])}, "

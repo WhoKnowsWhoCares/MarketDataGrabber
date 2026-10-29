@@ -10,7 +10,8 @@ INSTALLER = REPO / "deploy" / "install_cron.sh"
 # script name -> path relative to repo root, and expected cron schedule (MSK)
 EXPECTED_JOBS = {
     "increment_candles": ("scripts/increment_candles.py", "15 0 * * 1-5"),
-    "run_marts": ("scripts/run_marts.py", "35 0 * * *"),  # появится из P3.6a
+    "run_marts": ("scripts/run_marts.py", "35 0 * * *"),
+    "run_signals": ("scripts/run_signals.py", "40 0 * * *"),
     "run_dq": ("transforms/run_dq.py", "45 0 * * *"),
     "collect_fundamentals": ("scripts/collect_fundamentals.py", "30 6 * * *"),
     "collect_events": ("scripts/collect_events.py", "0 4 * * 0"),
@@ -33,7 +34,7 @@ def job_lines() -> list[str]:
 
 def test_every_job_line_has_marker() -> None:
     lines = job_lines()
-    assert len(lines) == 7, f"expected 7 job lines, got {len(lines)}"
+    assert len(lines) == 8, f"expected 8 job lines, got {len(lines)}"
     for ln in lines:
         assert "MDG:auto" in ln, f"job line without marker: {ln[:60]}..."
 
