@@ -13,6 +13,7 @@ A personal market-data collection and analytics system built on the **T-Invest A
 - **Grafana dashboard** — 13 panels in 6 rows: data freshness, DQ, instrument state cards, trend+MA, volumes, RSI zones, events, multiples; instrument selector
 - **Telegram bot** — `/digest` (morning digest), `/status` (freshness), `/subscribe` (signal filters), ops/market notification split
 - **Signals** — 7 types: RSI extremes, volume spikes (×2), close↔MA20 crossovers, golden/death cross (MA20↔MA50); delivery to subscribers with per-user filters + chart annotations
+- **Signal calibration** — signal set calibrated by 6-year backtest (2026-10-29): ma_cross_up, death_cross, ma_cross_down, rsi_oversold delivered; rsi_overbought/golden_cross/volume_spike detected but not delivered
 - **MCP server** — 5 read-only tools over the marts for AI agents (API keys, audit trail)
 - **DQ + watchdog** — daily data-quality checks and hourly freshness monitoring with Telegram alerts
 

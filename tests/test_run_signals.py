@@ -247,13 +247,15 @@ def test_main_force_broadcasts_despite_dedup(monkeypatch):
 
         def query(self, sql):
             def rows():
-                yield {"instrument_uid": "uid-SBER", "signal_type": "rsi_overbought",
+                yield {"instrument_uid": "uid-SBER", "signal_type": "ma_cross_up",
                        "bar_date": datetime(2026, 10, 28)}
             return SimpleNamespace(named_results=rows)
 
     monkeypatch.setattr(rs, "Settings", SimpleNamespace(load=lambda: settings))
     monkeypatch.setattr(rs, "get_client", lambda s: MockClient())
-    monkeypatch.setattr(rs, "detect_signals", lambda client, instruments: [SBER_SIG])
+    # calibrated-тип (ma_cross_up): недоставляемые типы отсеиваются калибровкой (P4.3)
+    monkeypatch.setattr(rs, "detect_signals",
+                        lambda client, instruments: [make_signal("SBER", "ma_cross_up")])
     monkeypatch.setattr(rs, "list_subscribers", lambda: ["222"])
     monkeypatch.setattr(
         rs, "list_subscriptions",

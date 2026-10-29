@@ -19,6 +19,26 @@ RSI_OVERSOLD = 30.0
 VOLUME_SPIKE_RATIO = 2.0
 DEDUP_WINDOW_DAYS = 30
 
+# Калибровка по бэктесту 2026-10-29 (6 лет, 2774 сигнала, win-rate 5d / avg 5d):
+# ma_cross_up 57.1%/+0.49%; death_cross 43.2%/-1.15% (avg20d -3.11%); ma_cross_down -0.28%;
+# rsi_oversold 51.1%/+0.41%; rsi_overbought +0.37%/+1.04% 20d (моментум); golden_cross -0.64%; volume_spike -0.36%.
+SIGNAL_CALIBRATION = {
+    "ma_cross_up":    {"deliver": True,  "importance": 2},
+    "death_cross":    {"deliver": True,  "importance": 3},
+    "ma_cross_down":  {"deliver": True,  "importance": 1},
+    "rsi_oversold":   {"deliver": True,  "importance": 1},
+    "rsi_overbought": {"deliver": False, "importance": 0},
+    "golden_cross":   {"deliver": False, "importance": 0},
+    "volume_spike":   {"deliver": False, "importance": 0},
+}
+
+_DEFAULT_CALIBRATION = {"deliver": False, "importance": 0}
+
+
+def calibration(signal_type: str) -> dict:
+    """Калибровка типа сигнала {deliver, importance}; неизвестный тип — не доставлять."""
+    return SIGNAL_CALIBRATION.get(signal_type, dict(_DEFAULT_CALIBRATION))
+
 
 def _q(s: str) -> str:
     """SQL-литерал строки с экранированием."""
@@ -92,6 +112,7 @@ def _make(uid: str, ticker: str, signal_type: str, bar_date, value: float, messa
         "bar_date": bar_date,
         "value": float(value),
         "message": message,
+        "importance": calibration(signal_type)["importance"],
     }
 
 

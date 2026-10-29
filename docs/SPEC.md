@@ -20,7 +20,7 @@ github: https://github.com/WhoKnowsWhoCares/MarketDataGrabber
 | P3 Отчёт | ✅ done (10-28) | дайджест, бот (aiogram3, подписки SQLite, Redis cooldown), Grafana 13 панелей, watchdog |
 | P3.5 MCP | ✅ done (10-29) | FastMCP :8900, 5 read-only инструментов, mdg_ro, ключи (SHA256), mcp_audit |
 | P3.6 Расписание | ✅ done (10-29) | crontab 8 задач (МСК), всё через docker (host python3.12 сломан — `_asyncio` segfault) |
-| P4 Сигналы | ✅ done (10-29) | 7 типов детекции, дедуп 30 дней, доставка по подпискам, Grafana-аннотации; первый прогон: 5 сигналов доставлено |
+| P4 Сигналы | ✅ done (10-29) | 7 типов детекции, дедуп 30 дней, доставка по подпискам, Grafana-аннотации; первый прогон: 5 сигналов доставлено; калибровка по бэктесту 10-29 |
 | P5 Бэктест | ⬜ | — |
 | P6 Полуавтомат + live | ⬜ | Redis pending-orders готов |
 | P7 Веб | ⬜ | — |
