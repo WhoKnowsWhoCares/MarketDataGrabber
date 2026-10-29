@@ -21,11 +21,14 @@ def send_telegram(
     category: str = "ops",
     chat_id: str | None = None,
     parse_mode: str | None = None,
+    reply_markup: dict | None = None,
 ) -> dict:
     """Отправить сообщение. ops — всегда админу (chat_id игнорируется).
 
     parse_mode='HTML' — для текстов с разметкой (<b>, <i>); обычные алерты
     оставляй без parse_mode, чтобы спецсимволы (<, >, &) не ломали отправку.
+    
+    reply_markup — inline клавиатура для inline-кнопок (dict с inline_keyboard).
     """
     if category not in ("ops", "market"):
         raise ValueError(f"неизвестная категория: {category}")
@@ -33,6 +36,8 @@ def send_telegram(
     payload: dict = {"chat_id": target, "text": text}
     if parse_mode:
         payload["parse_mode"] = parse_mode
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
     with httpx.Client(
         verify=settings.tls_verify, proxy=settings.telegram_proxy, timeout=30.0
     ) as http:
