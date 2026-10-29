@@ -134,3 +134,20 @@ CREATE TABLE IF NOT EXISTS market_data_aux.signals (
     sent          UInt8 DEFAULT 0          -- 1 = доставлено в Telegram (ставит рантайм)
 ) ENGINE = ReplacingMergeTree
 ORDER BY (instrument_uid, signal_type, bar_date);
+
+-- ============================================================
+-- Бэктест сигналов (P5.1): replay 7 типов по полной истории витрины,
+-- forward returns 1/5/20 торговых бара. Идемпотентно по ключу ORDER BY.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS market_data_aux.signal_backtest (
+    instrument_uid LowCardinality(String),
+    ticker         LowCardinality(String),
+    signal_type    LowCardinality(String),  -- те же 7 типов, что market_data_aux.signals
+    bar_date       Date,
+    value          Float64,                 -- rsi14 / volume_ratio / 0.0 для кроссов
+    fwd_ret_1d     Nullable(Float64),
+    fwd_ret_5d     Nullable(Float64),
+    fwd_ret_20d    Nullable(Float64),       -- NULL если T+N за концом истории
+    computed_at    DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(computed_at)
+ORDER BY (instrument_uid, signal_type, bar_date);

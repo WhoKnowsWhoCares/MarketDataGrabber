@@ -24,7 +24,7 @@ WITH
             close - lagInFrame(close) OVER (PARTITION BY instrument_uid ORDER BY bar_date) AS change_1d
         FROM market_data.candles_1d FINAL
         WHERE bar_date >= (
-            SELECT max(bar_date) - INTERVAL 600 DAY
+            SELECT max(bar_date) - INTERVAL 2500 DAY
             FROM market_data.candles_1d FINAL
         )
     ),
@@ -124,7 +124,7 @@ SELECT
     rsi14
 FROM final_metrics
 WHERE bar_date >= (
-    SELECT max(bar_date) - INTERVAL 600 DAY
+    SELECT max(bar_date) - INTERVAL 2500 DAY
     FROM market_data.candles_1d FINAL
 )
 ORDER BY instrument_uid, bar_date;
