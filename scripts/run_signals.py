@@ -35,6 +35,7 @@ from mdgrabber.config import Settings  # noqa: E402
 from mdgrabber.logging import get_logger, setup_logging  # noqa: E402
 from mdgrabber.notify import send_telegram  # noqa: E402
 from mdgrabber.signals import (  # noqa: E402
+    calibration,
     detect_signals,
     mark_sent,
     persist_new,
@@ -66,6 +67,16 @@ def subscription_matches(sub: dict, signal: dict) -> bool:
 def filter_for_subscriber(subs: list[dict], signals: list[dict]) -> list[dict]:
     """Сигналы, подходящие хотя бы под одну подписку подписчика."""
     return [s for s in signals if any(subscription_matches(sub, s) for sub in subs)]
+
+
+def filter_calibrated(signals: list[dict]) -> tuple[list[dict], int]:
+    """Калибровочный фильтр (P4.3): только сигналы типов с deliver=True.
+
+    Возвращает (доставляемые, сколько отфильтровано). Детекция по-прежнему
+    сохраняет все 7 типов в signals — фильтр стоит только на доставке.
+    """
+    deliverable = [s for s in signals if calibration(s["signal_type"])["deliver"]]
+    return deliverable, len(signals) - len(deliverable)
 
 
 def format_message(signals: list[dict]) -> str:
@@ -199,10 +210,20 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     log.info("new_signals", count=len(fresh), dry_run=args.dry_run)
-    broadcast(settings, fresh, dry_run=args.dry_run)
+    deliverable, filtered = filter_calibrated(fresh)
+    if filtered:
+        log.info("filtered_by_calibration", filtered=filtered, kept=len(deliverable))
+
+    if not deliverable:
+        log.info("no deliverable signals after calibration",
+                 detected=len(signals), filtered=filtered)
+        record_run(client, "ok", 0, started_at)
+        return 0
+
+    broadcast(settings, deliverable, dry_run=args.dry_run)
 
     if not args.dry_run:
-        for s in fresh:
+        for s in deliverable:
             try:
                 post_annotation(s)
             except Exception as exc:  # noqa: BLE001 — аннотация не валит рантайм
@@ -212,10 +233,11 @@ def main(argv: list[str] | None = None) -> int:
                     signal_type=s["signal_type"],
                     error=str(exc),
                 )
-        mark_sent(client, fresh)
+        mark_sent(client, deliverable)
 
-    record_run(client, "ok", len(fresh), started_at)
-    log.info("run_finished", delivered=len(fresh), dry_run=args.dry_run)
+    record_run(client, "ok", len(deliverable), started_at)
+    log.info("run_finished", delivered=len(deliverable),
+             filtered_by_calibration=filtered, dry_run=args.dry_run)
     return 0
 
 
