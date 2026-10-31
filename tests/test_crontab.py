@@ -9,7 +9,7 @@ INSTALLER = REPO / "deploy" / "install_cron.sh"
 
 # script name -> path relative to repo root, and expected cron schedule (MSK)
 EXPECTED_JOBS = {
-    "increment_candles": ("scripts/increment_candles.py", "15 0 * * 1-5"),
+    "increment_candles": ("scripts/increment_candles.py", "15 0 * * 1-6"),
     "run_marts": ("scripts/run_marts.py", "35 0 * * *"),
     "run_signals": ("scripts/run_signals.py", "40 0 * * *"),
     "run_dq": ("transforms/run_dq.py", "45 0 * * *"),

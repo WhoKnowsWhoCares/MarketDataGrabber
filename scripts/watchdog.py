@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 """Watchdog свежести данных MarketDataGrabber.
 
-Запускается менеджером по расписанию (не контейнер). Проверки:
-- fresh_1m:  max(bar_time) candles_1m старше 26 часов (вне торгов —
-             cooldown: не чаще 1 алерта/день, статус печатается всегда);
-- fresh_1d:  max(bar_date) candles_1d < вчера;
+Запускается cron'ом ежечасно. Проверки:
+- fresh_1m:  в candles_1m есть минутки за ожидаемый торговый день
+             (открытие = 06:00 UTC; раньше сравнивали с «26 часов назад»,
+             что ложно алертило в выходные);
+- fresh_1d:  max(bar_date) candles_1d >= ожидаемый торговый день;
 - dq_warn:   последняя dq_metrics gap_vs_calendar > 10;
-- vitrines:  mart_daily_metrics max(bar_date) < вчера.
+- vitrines:  mart_daily_metrics max(bar_date) < ожидаемый торговый день.
+
+Ожидаемый торговый день (expected): последний завершённый день, за который
+ночной сбор (00:15 МСК, пн-сб) уже должен был отработать. Будни + суббота
+(MOEX проводит субботние сессии); воскресенье сдвигает к субботе; до 00:45
+МСК вчерашний ночной сбор ещё не прошёл — берём позавчерашний торговый день.
+Праздники MOEX не учитываются (известное ограничение, до P7).
 
 Все проверки ОК  -> печатает "WATCHDOG: OK", exit 0.
 Любой провал     -> send_telegram(category='ops') с деталями, exit 1.
@@ -14,7 +21,7 @@
 from __future__ import annotations
 
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, time as dtime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,45 +31,66 @@ from mdgrabber.ch import get_client
 from mdgrabber.config import Settings
 from mdgrabber.notify import send_telegram
 
-# Свежесть 1m: столько часов считаем нормой (вечер/ночь/выходные дают лаг).
-STALE_1M_HOURS = 26.0
+# Свежесть 1m: минуты за ожидаемый торговый день (см. expected_trading_day).
+FRESH_1M_OPEN_UTC = dtime(6, 0)  # 10:00 МСК — открытие основной сессии
 # Порог DQ по расхождениям с торговым календарём.
 DQ_GAP_THRESHOLD = 10.0
 # Файл состояния cooldown для fresh_1m (1 алерт/день).
 COOLDOWN_FILE = Path("/tmp/mdg_watchdog_fresh_1m_last_alert")
+# Время МСК, после которого вчерашний ночной сбор (00:15/00:35 МСК) считается
+# отработавшим (с запасом на длительность).
+NIGHT_RUN_DONE_MSK = dtime(0, 45)
 
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def expected_trading_day() -> date:
+    """Последний торговый день, за который ночной сбор уже должен был пройти.
+
+    MSK ≡ UTC+3 (лето/зима не различаются в России). Логика:
+    - стартуем с «вчера» по МСК;
+    - до 00:45 МСК вчерашний ночной сбор ещё не отработал — сдвиг на день назад;
+    - воскресенье (нет сессий) — сдвиг на день назад (к субботе).
+    """
+    msk = _utcnow() + timedelta(hours=3)
+    d = msk.date() - timedelta(days=1)
+    if msk.time() < NIGHT_RUN_DONE_MSK:
+        d -= timedelta(days=1)
+    if d.weekday() == 6:  # воскресенье
+        d -= timedelta(days=1)
+    return d
+
+
 def check_fresh_1m(ch) -> tuple[bool, str]:
-    """True = OK. max(bar_time) candles_1m не старше 26 часов."""
+    """True = OK. В candles_1m есть минутки за ожидаемый торговый день."""
+    expected = expected_trading_day()
+    threshold = datetime.combine(expected, FRESH_1M_OPEN_UTC, tzinfo=timezone.utc)
     row = ch.query("SELECT max(bar_time) FROM market_data.candles_1m FINAL").result_rows
     max_bar = row[0][0] if row and row[0][0] else None
     if max_bar is None:
         return False, "fresh_1m: candles_1m пуста"
     if max_bar.tzinfo is None:
         max_bar = max_bar.replace(tzinfo=timezone.utc)
-    hours = (_utcnow() - max_bar).total_seconds() / 3600.0
-    ok = hours <= STALE_1M_HOURS
+    ok = max_bar >= threshold
     return ok, (
         f"fresh_1m: {'OK' if ok else 'FAIL'} — max(bar_time)={max_bar}, "
-        f"возраст {hours:.1f} ч (порог {STALE_1M_HOURS} ч)"
+        f"ожидался день {expected} (порог {threshold:%Y-%m-%d %H:%M} UTC)"
     )
 
 
 def check_fresh_1d(ch) -> tuple[bool, str]:
-    """max(bar_date) candles_1d >= вчера (вчера = календарная, MSK≈UTC здесь неважно)."""
-    yesterday = (_utcnow() - timedelta(days=1)).date()
+    """max(bar_date) candles_1d >= ожидаемый торговый день."""
+    expected = expected_trading_day()
     row = ch.query("SELECT max(bar_date) FROM market_data.candles_1d FINAL").result_rows
     max_date = row[0][0] if row and row[0][0] else None
     if max_date is None:
         return False, "fresh_1d: candles_1d пуста"
-    ok = max_date >= yesterday
+    ok = max_date >= expected
     return ok, (
         f"fresh_1d: {'OK' if ok else 'FAIL'} — max(bar_date)={max_date}, "
-        f"ожидалось >= {yesterday}"
+        f"ожидалось >= {expected}"
     )
 
 
@@ -84,18 +112,18 @@ def check_dq_warn(ch) -> tuple[bool, str]:
 
 
 def check_vitrines(ch) -> tuple[bool, str]:
-    """max(bar_date) mart_daily_metrics >= вчера."""
-    yesterday = (_utcnow() - timedelta(days=1)).date()
+    """max(bar_date) mart_daily_metrics >= ожидаемый торговый день."""
+    expected = expected_trading_day()
     row = ch.query(
         "SELECT max(bar_date) FROM market_data_gold.mart_daily_metrics"
     ).result_rows
     max_date = row[0][0] if row and row[0][0] else None
     if max_date is None:
         return False, "vitrines: market_data_gold.mart_daily_metrics пуста"
-    ok = max_date >= yesterday
+    ok = max_date >= expected
     return ok, (
         f"vitrines: {'OK' if ok else 'FAIL'} — max(bar_date)={max_date}, "
-        f"ожидалось >= {yesterday}"
+        f"ожидалось >= {expected}"
     )
 
 
