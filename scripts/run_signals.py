@@ -250,7 +250,7 @@ def _create_signal_pending(settings: Settings, signals: list[dict]) -> None:
                     "lots": 1,
                     "chat_id": chat_id,
                 }
-                r.setex(pending_key, 60, json.dumps(order_data))
+                r.set(pending_key, json.dumps(order_data), ex=60)
     except Exception as exc:
         log.warning("Redis недоступен, pending для сигналов не создан: %s", exc)
 
