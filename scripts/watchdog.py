@@ -13,7 +13,10 @@
 ночной сбор (00:15 МСК, пн-сб) уже должен был отработать. Будни + суббота
 (MOEX проводит субботние сессии); воскресенье сдвигает к субботе; до 00:45
 МСК вчерашний ночной сбор ещё не прошёл — берём позавчерашний торговый день.
-Праздники MOEX не учитываются (известное ограничение, до P7).
+После эвристики день проверяется по торговому календарю
+(market_data.events, event_type='trading_day'): праздник сдвигает expected
+назад до ближайшего торгового дня; если строки в календаре нет или CH
+недоступен — работаем по чистой эвристике.
 
 Все проверки ОК  -> печатает "WATCHDOG: OK", exit 0.
 Любой провал     -> send_telegram(category='ops') с деталями, exit 1.
@@ -40,19 +43,49 @@ COOLDOWN_FILE = Path("/tmp/mdg_watchdog_fresh_1m_last_alert")
 # Время МСК, после которого вчерашний ночной сбор (00:15/00:35 МСК) считается
 # отработавшим (с запасом на длительность).
 NIGHT_RUN_DONE_MSK = dtime(0, 45)
+# Максимум дней отката назад по календарю (защита от цикла при серии праздников).
+MAX_CALENDAR_SHIFT = 14
 
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def expected_trading_day() -> date:
+def _calendar_is_trading(ch, d: date) -> bool | None:
+    """Торговый ли день d по календарю (market_data.events, trading_day).
+
+    True/False — день есть в календаре (payload.is_open);
+    None — строки нет (календарь не собран/новый день) или CH недоступен
+    (в т.ч. ch is None в тестах): не блокируем, считается торговым по эвристике.
+    """
+    if ch is None:
+        return None
+    try:
+        rows = ch.query(
+            "SELECT JSONExtractBool(payload, 'is_open') FROM market_data.events "
+            "WHERE event_type = 'trading_day' AND expected_date = {d:Date} "
+            "ORDER BY fetched_at DESC LIMIT 1",
+            parameters={"d": d},
+        ).result_rows
+    except Exception as e:
+        print(
+            f"WARN: календарь недоступен ({type(e).__name__}: {e}) — чистая эвристика"
+        )
+        return None
+    if not rows:
+        return None
+    return bool(rows[0][0])
+
+
+def expected_trading_day(ch=None) -> date:
     """Последний торговый день, за который ночной сбор уже должен был пройти.
 
     MSK ≡ UTC+3 (лето/зима не различаются в России). Логика:
     - стартуем с «вчера» по МСК;
     - до 00:45 МСК вчерашний ночной сбор ещё не отработал — сдвиг на день назад;
-    - воскресенье (нет сессий) — сдвиг на день назад (к субботе).
+    - воскресенье (нет сессий) — сдвиг на день назад (к субботе);
+    - если календарь (ch) помечает день праздником — откат назад до торгового
+      дня; нет строки/недоступен CH — оставляем эвристический день.
     """
     msk = _utcnow() + timedelta(hours=3)
     d = msk.date() - timedelta(days=1)
@@ -60,12 +93,17 @@ def expected_trading_day() -> date:
         d -= timedelta(days=1)
     if d.weekday() == 6:  # воскресенье
         d -= timedelta(days=1)
+    for _ in range(MAX_CALENDAR_SHIFT):
+        is_trading = _calendar_is_trading(ch, d)
+        if is_trading is not False:
+            return d
+        d -= timedelta(days=1)
     return d
 
 
 def check_fresh_1m(ch) -> tuple[bool, str]:
     """True = OK. В candles_1m есть минутки за ожидаемый торговый день."""
-    expected = expected_trading_day()
+    expected = expected_trading_day(ch)
     threshold = datetime.combine(expected, FRESH_1M_OPEN_UTC, tzinfo=timezone.utc)
     row = ch.query("SELECT max(bar_time) FROM market_data.candles_1m FINAL").result_rows
     max_bar = row[0][0] if row and row[0][0] else None
@@ -82,7 +120,7 @@ def check_fresh_1m(ch) -> tuple[bool, str]:
 
 def check_fresh_1d(ch) -> tuple[bool, str]:
     """max(bar_date) candles_1d >= ожидаемый торговый день."""
-    expected = expected_trading_day()
+    expected = expected_trading_day(ch)
     row = ch.query("SELECT max(bar_date) FROM market_data.candles_1d FINAL").result_rows
     max_date = row[0][0] if row and row[0][0] else None
     if max_date is None:
@@ -113,7 +151,7 @@ def check_dq_warn(ch) -> tuple[bool, str]:
 
 def check_vitrines(ch) -> tuple[bool, str]:
     """max(bar_date) mart_daily_metrics >= ожидаемый торговый день."""
-    expected = expected_trading_day()
+    expected = expected_trading_day(ch)
     row = ch.query(
         "SELECT max(bar_date) FROM market_data_gold.mart_daily_metrics"
     ).result_rows
