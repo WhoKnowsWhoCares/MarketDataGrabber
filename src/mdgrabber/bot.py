@@ -30,6 +30,7 @@ from aiogram.types import (
 # Локальные импорты
 # ---------------------------------------------------------------------------
 from .config import Settings
+from .logging import get_logger
 from .ratelimit import allow as _allow
 from .trade import TradeClient, TradeError
 from .users import add_user, add_subscription, get_user, init_db, list_subscribers, list_subscriptions, remove_subscription
@@ -37,6 +38,8 @@ from .notify import send_telegram
 from .report import build_digest
 
 log = logging.getLogger(__name__)
+# structlog-логгер для торгового флоу (JSON-события)
+logger = get_logger("bot")
 
 router = Router()
 
@@ -212,11 +215,13 @@ async def cmd_trade(msg: Message) -> None:
 
     # Guard: только админ
     if not _is_admin(chat_id, settings):
+        logger.warning("trade_rejected", reason="not_admin")
         await _safe_reply(msg, "❌ Команда недоступна: только для администратора.")
         return
 
     # Guard: sandbox-only
     if settings.trade_mode != "sandbox":
+        logger.warning("trade_rejected", reason="trade_error")
         await _safe_reply(msg, "❌ Trading disabled: trade_mode != sandbox")
         return
 
@@ -241,6 +246,7 @@ async def cmd_trade(msg: Message) -> None:
         return
 
     if lots > settings.trade_max_lots or lots < 1:
+        logger.warning("trade_rejected", reason="too_many_lots", lots=lots)
         await _safe_reply(msg, f"❌ Lots должен быть 1..{settings.trade_max_lots}")
         return
 
@@ -251,6 +257,7 @@ async def cmd_trade(msg: Message) -> None:
 
     # Cooldown 10с по chat_id
     if not _allow(f"trade:cooldown:{chat_id}", ttl_seconds=10):
+        logger.warning("trade_rejected", reason="cooldown")
         await _safe_reply(msg, "⏳ Cooldown 10с: подождите перед следующей сделкой.")
         return
 
@@ -301,14 +308,17 @@ async def cb_trade_exec(cb: CallbackQuery) -> None:
     """Обработчик нажатия 'Исполнить'."""
     settings = Settings.load()
     chat_id = str(cb.from_user.id)
+    logger.info("trade_callback", data=cb.data, chat_id=chat_id)
 
     # Guard: только админ
     if not _is_admin(chat_id, settings):
+        logger.warning("trade_rejected", reason="not_admin")
         await cb.answer("❌ Только администратор может исполнять сделки", show_alert=True)
         return
 
     # Guard: sandbox-only
     if settings.trade_mode != "sandbox":
+        logger.warning("trade_rejected", reason="trade_error")
         await cb.answer("❌ Trading disabled: trade_mode != sandbox", show_alert=True)
         return
 
@@ -322,6 +332,7 @@ async def cb_trade_exec(cb: CallbackQuery) -> None:
         r = redis.from_url(redis_url, socket_connect_timeout=2, socket_timeout=2)
         pending_json = r.get(pending_key)
         if not pending_json:
+            logger.warning("trade_rejected", reason="expired")
             await cb.answer("❌ Запрос истёк (60с). Повторите /trade.", show_alert=True)
             await cb.message.edit_text("❌ Время подтверждения истекло (60с).")
             return
@@ -359,11 +370,20 @@ async def cb_trade_exec(cb: CallbackQuery) -> None:
         )
         await cb.message.edit_text(text, parse_mode=ParseMode.HTML)
         await cb.answer("Исполнено")
+        logger.info(
+            "trade_executed",
+            order_id=order_id,
+            ticker=order["ticker"],
+            lots=order["lots"],
+            status=exec_status,
+        )
     except TradeError as exc:
+        logger.warning("trade_rejected", reason="trade_error", code=exc.code)
         text = f"❌ Ошибка торговли: code={exc.code}, {exc.message}"
         await cb.message.edit_text(text, parse_mode=ParseMode.HTML)
         await cb.answer(f"Ошибка: {exc.code}", show_alert=True)
     except Exception as exc:
+        logger.warning("trade_rejected", reason="trade_error", error=str(exc))
         log.exception("Ошибка исполнения сделки")
         await cb.message.edit_text(f"❌ Ошибка: {exc}")
         await cb.answer("Ошибка", show_alert=True)
@@ -394,14 +414,17 @@ async def cb_trade_signal(cb: CallbackQuery) -> None:
     """Обработчик кнопки 'Исполнить' на сигнале (broadcast)."""
     settings = Settings.load()
     chat_id = str(cb.from_user.id)
+    logger.info("trade_callback", data=cb.data, chat_id=chat_id)
 
     # Guard: только админ
     if not _is_admin(chat_id, settings):
+        logger.warning("trade_rejected", reason="not_admin")
         await cb.answer("❌ Только администратор может исполнять сделки", show_alert=True)
         return
 
     # Guard: sandbox-only
     if settings.trade_mode != "sandbox":
+        logger.warning("trade_rejected", reason="trade_error")
         await cb.answer("❌ Trading disabled: trade_mode != sandbox", show_alert=True)
         return
 
@@ -425,6 +448,7 @@ async def cb_trade_signal(cb: CallbackQuery) -> None:
         r = redis.from_url(redis_url, socket_connect_timeout=2, socket_timeout=2)
         pending_json = r.get(pending_key)
         if not pending_json:
+            logger.warning("trade_rejected", reason="expired")
             await cb.answer("❌ Запрос истёк (60с). Сигнал больше не актуален.", show_alert=True)
             await cb.message.edit_text("❌ Время подтверждения истекло (60с).")
             return
@@ -462,11 +486,20 @@ async def cb_trade_signal(cb: CallbackQuery) -> None:
         )
         await cb.message.edit_text(text, parse_mode=ParseMode.HTML)
         await cb.answer("Исполнено")
+        logger.info(
+            "trade_executed",
+            order_id=order_id,
+            ticker=order["ticker"],
+            lots=order["lots"],
+            status=exec_status,
+        )
     except TradeError as exc:
+        logger.warning("trade_rejected", reason="trade_error", code=exc.code)
         text = f"❌ Ошибка торговли: code={exc.code}, {exc.message}"
         await cb.message.edit_text(text, parse_mode=ParseMode.HTML)
         await cb.answer(f"Ошибка: {exc.code}", show_alert=True)
     except Exception as exc:
+        logger.warning("trade_rejected", reason="trade_error", error=str(exc))
         log.exception("Ошибка исполнения сделки по сигналу")
         await cb.message.edit_text(f"❌ Ошибка: {exc}")
         await cb.answer("Ошибка", show_alert=True)

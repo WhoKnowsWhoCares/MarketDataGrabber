@@ -67,17 +67,17 @@ def test_pending_ttl_write_read(monkeypatch):
         # Call internal function
         rs._create_signal_pending(settings, signals)
         
-        # Verify setex called with 60s TTL
-        mock_redis.setex.assert_called()
-        call_args = mock_redis.setex.call_args
-        assert call_args[0][1] == 60  # TTL
+        # Verify set called with ex=60 (redis-py 8.x: setex deprecated)
+        mock_redis.set.assert_called()
+        call_args = mock_redis.set.call_args
+        assert call_args.kwargs.get("ex") == 60  # TTL
         pending_key = call_args[0][0]
         assert "trade:pending:" in pending_key
         assert "SBER" in pending_key
         assert "2026-10-28" in pending_key
         
         # Verify JSON payload
-        payload = json.loads(call_args[0][2])
+        payload = json.loads(call_args[0][1])
         assert payload["ticker"] == "SBER"
         assert payload["direction"] == "buy"
         assert payload["lots"] == 1
@@ -383,6 +383,178 @@ def test_no_trade_settings_graceful(monkeypatch):
     # But with sandbox mode and empty token, it initializes but fails on HTTP call
     # This is handled by try/except in callback
     assert settings.trade_mode == "sandbox"
+
+
+# ========== Tests for structlog trade-flow events (P6.4) ==========
+
+def _run_coro(coro):
+    import asyncio
+    return asyncio.run(coro)
+
+
+async def _noop_coro(*a, **kw):
+    pass
+
+
+def test_trade_callback_and_executed_logged(monkeypatch):
+    """trade-callback логирует trade_callback и trade_executed (со status)."""
+    from mdgrabber import bot as bot_mod
+
+    settings = make_settings(ADMIN_CHAT_ID="1", TRADE_MODE="sandbox")
+    monkeypatch.setattr(bot_mod.Settings, "load", classmethod(lambda cls: settings))
+    monkeypatch.setattr(bot_mod, "_ticker_to_figi", lambda t: "BBG004730N88")
+
+    pending = {
+        "figi": "BBG004730N88",
+        "ticker": "SBER",
+        "direction": "buy",
+        "lots": 1,
+        "chat_id": "1",
+    }
+
+    class _Msg:
+        async def edit_text(self, *a, **kw):
+            pass
+
+    cb = SimpleNamespace(
+        from_user=SimpleNamespace(id=1),
+        data="trade:exec:SBER:buy:1",
+        message=_Msg(),
+        answer=lambda *a, **kw: _noop_coro(),
+    )
+
+    with patch("redis.from_url") as mock_from_url, \
+         patch.object(bot_mod, "logger") as mock_logger, \
+         patch.object(bot_mod, "TradeClient") as mock_client_cls:
+        mock_redis = MagicMock()
+        mock_from_url.return_value = mock_redis
+        mock_redis.get.return_value = json.dumps(pending)
+
+        mock_client_cls.return_value.place_market_order.return_value = {
+            "orderId": "o-789",
+            "executionReportStatus": "EXECUTION_REPORT_STATUS_FILL",
+        }
+
+        _run_coro(bot_mod.cb_trade_exec(cb))
+
+        # trade_callback: info при получении callback
+        info_events = [c.args[0] for c in mock_logger.info.call_args_list if c.args]
+        assert "trade_callback" in info_events
+        cb_call = [c for c in mock_logger.info.call_args_list if c.args and c.args[0] == "trade_callback"][0]
+        assert cb_call.kwargs["data"] == "trade:exec:SBER:buy:1"
+
+        # trade_executed: info после исполнения, status из ответа
+        assert "trade_executed" in info_events
+        ex_call = [c for c in mock_logger.info.call_args_list if c.args and c.args[0] == "trade_executed"][0]
+        assert ex_call.kwargs["order_id"] == "o-789"
+        assert ex_call.kwargs["ticker"] == "SBER"
+        assert ex_call.kwargs["lots"] == 1
+        assert ex_call.kwargs["status"] == "EXECUTION_REPORT_STATUS_FILL"
+
+
+def test_trade_rejected_expired_logged(monkeypatch):
+    """Истёк pending → warning trade_rejected reason=expired."""
+    from mdgrabber import bot as bot_mod
+
+    settings = make_settings(ADMIN_CHAT_ID="1", TRADE_MODE="sandbox")
+    monkeypatch.setattr(bot_mod.Settings, "load", classmethod(lambda cls: settings))
+
+    class _Msg:
+        async def edit_text(self, *a, **kw):
+            pass
+
+    cb = SimpleNamespace(
+        from_user=SimpleNamespace(id=1),
+        data="trade:exec:SBER:buy:1",
+        message=_Msg(),
+        answer=lambda *a, **kw: _noop_coro(),
+    )
+
+    with patch("redis.from_url") as mock_from_url, \
+         patch.object(bot_mod, "logger") as mock_logger:
+        mock_redis = MagicMock()
+        mock_from_url.return_value = mock_redis
+        mock_redis.get.return_value = None  # expired
+
+        _run_coro(bot_mod.cb_trade_exec(cb))
+
+        warn_calls = [
+            c for c in mock_logger.warning.call_args_list
+            if c.args and c.args[0] == "trade_rejected"
+        ]
+        assert len(warn_calls) == 1
+        assert warn_calls[0].kwargs["reason"] == "expired"
+
+
+def test_trade_rejected_not_admin_logged(monkeypatch):
+    """Callback от non-admin → warning trade_rejected reason=not_admin."""
+    from mdgrabber import bot as bot_mod
+
+    settings = make_settings(ADMIN_CHAT_ID="999")
+    monkeypatch.setattr(bot_mod.Settings, "load", classmethod(lambda cls: settings))
+
+    cb = SimpleNamespace(
+        from_user=SimpleNamespace(id=1),
+        data="trade:exec:SBER:buy:1",
+        message=SimpleNamespace(),
+        answer=lambda *a, **kw: _noop_coro(),
+    )
+
+    with patch.object(bot_mod, "logger") as mock_logger:
+        _run_coro(bot_mod.cb_trade_exec(cb))
+
+        warn_calls = [
+            c for c in mock_logger.warning.call_args_list
+            if c.args and c.args[0] == "trade_rejected"
+        ]
+        assert len(warn_calls) == 1
+        assert warn_calls[0].kwargs["reason"] == "not_admin"
+
+
+def test_trade_error_rejected_logged(monkeypatch):
+    """TradeError от API → warning trade_rejected reason=trade_error."""
+    from mdgrabber import bot as bot_mod
+    from mdgrabber.trade import TradeError
+
+    settings = make_settings(ADMIN_CHAT_ID="1", TRADE_MODE="sandbox")
+    monkeypatch.setattr(bot_mod.Settings, "load", classmethod(lambda cls: settings))
+    monkeypatch.setattr(bot_mod, "_ticker_to_figi", lambda t: "BBG004730N88")
+
+    pending = {
+        "figi": "BBG004730N88",
+        "ticker": "SBER",
+        "direction": "buy",
+        "lots": 1,
+        "chat_id": "1",
+    }
+
+    class _Msg:
+        async def edit_text(self, *a, **kw):
+            pass
+
+    cb = SimpleNamespace(
+        from_user=SimpleNamespace(id=1),
+        data="trade:exec:SBER:buy:1",
+        message=_Msg(),
+        answer=lambda *a, **kw: _noop_coro(),
+    )
+
+    with patch("redis.from_url") as mock_from_url, \
+         patch.object(bot_mod, "logger") as mock_logger, \
+         patch.object(bot_mod, "TradeClient") as mock_client_cls:
+        mock_redis = MagicMock()
+        mock_from_url.return_value = mock_redis
+        mock_redis.get.return_value = json.dumps(pending)
+        mock_client_cls.return_value.place_market_order.side_effect = TradeError(30099, "boom")
+
+        _run_coro(bot_mod.cb_trade_exec(cb))
+
+        warn_calls = [
+            c for c in mock_logger.warning.call_args_list
+            if c.args and c.args[0] == "trade_rejected"
+        ]
+        assert len(warn_calls) == 1
+        assert warn_calls[0].kwargs["reason"] == "trade_error"
 
 
 if __name__ == "__main__":
