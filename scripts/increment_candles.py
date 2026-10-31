@@ -214,7 +214,7 @@ def main() -> int:
     # ---------- сводка ----------
     print(f"\nитого: минуток +{total_1m}, дневок +{total_1d}, ошибок: {failed}")
     lines = [
-        "increment_candles: ежедневный инкремент 1m+1d завершён",
+        "increment_candles: инкремент 1m+1d ЗАВЕРШЁН С ОШИБКАМИ",
         f"минуток: +{total_1m}, дневок: +{total_1d}",
     ]
     for ticker, s in summary.items():
@@ -223,11 +223,12 @@ def main() -> int:
         lines.append(f"{ticker}: 1m +{s['ins_1m']} (max {m1}), 1d +{s['ins_1d']} (max {d1})")
     if failed:
         lines.append(f"ошибок: {failed}")
-    try:
-        send_telegram(settings, "\n".join(lines), category="ops")
-        print("Telegram: сводка отправлена")
-    except Exception as e:  # noqa: BLE001
-        print(f"WARN: Telegram недоступен: {e} — продолжаем")
+        # В Telegram — только неуспешные прогоны (успешные видны в логах/etl_runs).
+        try:
+            send_telegram(settings, "\n".join(lines), category="ops")
+            print("Telegram: алерт об ошибках отправлен")
+        except Exception as e:  # noqa: BLE001
+            print(f"WARN: Telegram недоступен: {e} — продолжаем")
 
     return 0 if not failed else 1
 
