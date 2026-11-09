@@ -112,7 +112,7 @@ def main() -> int:
             else:
                 start_1m = last.replace(tzinfo=timezone.utc) - OVERLAP
 
-        new_1m = ins_1m = 0
+        ins_1m = 0
         max_1m: datetime | None = None
         candles_fetched = 0
         err_1m = None
@@ -138,15 +138,8 @@ def main() -> int:
                 ins_1m += len(rows)
                 chunk_max = max(r[1] for r in rows)
                 max_1m = chunk_max if max_1m is None else max(max_1m, chunk_max)
-        if max_1m is not None:
-            row = ch.query(
-                "SELECT max(bar_time) FROM market_data.candles_1m WHERE instrument_uid = {uid:String}",
-                parameters={"uid": uid},
-            ).result_rows
-            db_max = row[0][0].replace(tzinfo=timezone.utc) if row and row[0][0] else max_1m
-            new_1m = ins_1m  # вставлено строк за этот запуск
-
-        # ---------- 1d ----------
+        if err_1m:
+            failed += 1
         if args.days > 0:
             from_date = (now - timedelta(days=args.days)).date()
         else:
@@ -166,8 +159,6 @@ def main() -> int:
         except Exception as e:  # noqa: BLE001
             print(f"ERROR {ticker} 1d [{from_iso}..{to_iso}]: {e}")
             candles_d = []
-            failed += 1
-        if err_1m:
             failed += 1
         if candles_d:
             rows_d = [

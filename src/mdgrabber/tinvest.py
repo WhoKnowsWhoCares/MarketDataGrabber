@@ -59,9 +59,12 @@ class TInvestClient:
         for _ in range(retries):
             r = self._http.post(path, json=payload, headers=self._headers)
             if r.status_code == 429:
-                wait = int(r.headers.get("Retry-After", "2")) + 1
+                try:
+                    wait = int(r.headers.get("Retry-After", "2")) + 1
+                except ValueError:  # HTTP-date или мусор — дефолт
+                    wait = 3
                 time.sleep(wait)
-                last_err = f"429 после {retries} попыток"
+                last_err = "429 после всех попыток"
                 continue
             if r.status_code >= 400:
                 raise TInvestError(f"{path}: HTTP {r.status_code}: {r.text[:200]}")

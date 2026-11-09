@@ -319,6 +319,10 @@ def main(argv: list[str] | None = None) -> int:
     if not deliverable:
         log.info("no deliverable signals after calibration",
                  detected=len(signals), filtered=filtered)
+        if not args.dry_run:
+            # Отфильтрованные тоже помечаем sent=1, иначе они навсегда остаются
+            # sent=0 и fetch_unsent читает их на каждом прогоне.
+            mark_sent(client, fresh)
         record_run(client, "ok", 0, started_at)
         return 0
 
@@ -336,6 +340,9 @@ def main(argv: list[str] | None = None) -> int:
                     error=str(exc),
                 )
         mark_sent(client, deliverable)
+        if filtered:
+            # Отфильтрованные калибровкой — тоже закрываем (см. выше).
+            mark_sent(client, [s for s in fresh if s not in deliverable])
 
     record_run(client, "ok", len(deliverable), started_at)
     log.info("run_finished", delivered=len(deliverable),

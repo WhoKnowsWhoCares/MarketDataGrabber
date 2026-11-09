@@ -19,8 +19,8 @@ except ImportError:
 def allow(key: str, ttl_seconds: int = 10, redis_url: Optional[str] = None) -> bool:
     """Разрешить действие? True если cooldown истёк или Redis недоступен.
 
-    Алгоритм: INCR key → если == 1 то EXPIRE key ttl_seconds → разрешаем.
-    Иначе — блокируем (cooldown активен).
+    Атомарный SET NX EX: ключ поставился — действие разрешено и занял окно
+    cooldown; ключ уже есть — окно активно, блокируем (False).
     """
     if _redis_module is None:
         log.warning("redis пакет не установлен, cooldown отключён")
@@ -32,10 +32,8 @@ def allow(key: str, ttl_seconds: int = 10, redis_url: Optional[str] = None) -> b
 
     try:
         r = _redis_module.from_url(redis_url, socket_connect_timeout=2, socket_timeout=2)
-        count = r.incr(key)
-        if count == 1:
-            r.expire(key, ttl_seconds)
-        return True
+        # SET NX EX — атомарно: True если ключа не было (окно занято нами)
+        return bool(r.set(key, 1, ex=ttl_seconds, nx=True))
     except Exception as exc:
         log.warning("Redis недоступен, cooldown пропускается: %s", exc)
         return True

@@ -101,6 +101,21 @@ async def cmd_start(msg: Message, bot: Bot) -> None:
         await _safe_reply(msg, "Вы уже зарегистрированы. Используйте /help для команд.")
 
 
+HELP_TEXT = (
+    "📋 Команды:\n"
+    "/digest — ежедневный дайджест по universe\n"
+    "/status — свежесть данных\n"
+    "/subscribe <TICKER|*> [тип] — подписка на сигналы\n"
+    "/unsubscribe [TICKER] — отписаться\n"
+    "/trade <TICKER> buy|sell [lots] — исполнить сделку (только админ)"
+)
+
+
+@router.message(Command("help"))
+async def cmd_help(msg: Message) -> None:
+    await _safe_reply(msg, HELP_TEXT)
+
+
 @router.message(Command("digest"))
 async def cmd_digest(msg: Message, bot: Bot) -> None:
     try:
@@ -285,7 +300,7 @@ async def cmd_trade(msg: Message) -> None:
 
     # Inline-панель подтверждения
     text = (
-        f"⚡ SANDBOX {direction.upper()} {lots} {ticker} (~295.6 ₽/лот).\n"
+        f"⚡ SANDBOX {direction.upper()} {lots} {ticker}.\n"
         f"✅ Исполнить / ❌ Отмена (60с)"
     )
     keyboard = InlineKeyboardMarkup(
@@ -302,6 +317,15 @@ async def cmd_trade(msg: Message) -> None:
 # ---------------------------------------------------------------------------
 # Callback handlers
 # ---------------------------------------------------------------------------
+
+def _restore_pending(r, pending_key: str, pending_json: "str | bytes") -> None:
+    """Вернуть pending в Redis после неудачного исполнения — можно повторить
+    нажатие «Исполнить» без нового /trade (окно 60с отсчитывается заново)."""
+    try:
+        r.setex(pending_key, 60, pending_json)
+    except Exception:
+        log.warning("Не удалось вернуть pending после ошибки исполнения")
+
 
 @router.callback_query(F.data.startswith("trade:exec:"))
 async def cb_trade_exec(cb: CallbackQuery) -> None:
@@ -378,11 +402,13 @@ async def cb_trade_exec(cb: CallbackQuery) -> None:
             status=exec_status,
         )
     except TradeError as exc:
+        _restore_pending(r, pending_key, pending_json)
         logger.warning("trade_rejected", reason="trade_error", code=exc.code)
         text = f"❌ Ошибка торговли: code={exc.code}, {exc.message}"
         await cb.message.edit_text(text, parse_mode=ParseMode.HTML)
         await cb.answer(f"Ошибка: {exc.code}", show_alert=True)
     except Exception as exc:
+        _restore_pending(r, pending_key, pending_json)
         logger.warning("trade_rejected", reason="trade_error", error=str(exc))
         log.exception("Ошибка исполнения сделки")
         await cb.message.edit_text(f"❌ Ошибка: {exc}")
@@ -494,11 +520,13 @@ async def cb_trade_signal(cb: CallbackQuery) -> None:
             status=exec_status,
         )
     except TradeError as exc:
+        _restore_pending(r, pending_key, pending_json)
         logger.warning("trade_rejected", reason="trade_error", code=exc.code)
         text = f"❌ Ошибка торговли: code={exc.code}, {exc.message}"
         await cb.message.edit_text(text, parse_mode=ParseMode.HTML)
         await cb.answer(f"Ошибка: {exc.code}", show_alert=True)
     except Exception as exc:
+        _restore_pending(r, pending_key, pending_json)
         logger.warning("trade_rejected", reason="trade_error", error=str(exc))
         log.exception("Ошибка исполнения сделки по сигналу")
         await cb.message.edit_text(f"❌ Ошибка: {exc}")
@@ -510,17 +538,26 @@ async def cb_trade_signal(cb: CallbackQuery) -> None:
 # ---------------------------------------------------------------------------
 
 async def error_middleware(handler, event, data):
+    """Отвечает пользователю при необработанной ошибке хендлера и логирует её.
+
+    Регистрируется как outer_middleware на message и callback_query
+    (см. main): event_from_user в data — это User (без .answer), поэтому
+    для ответа достаём Message/CallbackQuery из самого Update.
+    """
     try:
         return await handler(event, data)
     except Exception as exc:
         log.exception("Unhandled exception in handler")
-        # Пытаемся достать message из data
-        msg = data.get("event_from_user")
-        if hasattr(msg, "answer"):
-            try:
-                await msg.answer(_error_text(exc))
-            except Exception:
-                pass
+        update = data.get("event")
+        message = getattr(update, "message", None)
+        callback = getattr(update, "callback_query", None)
+        try:
+            if message is not None:
+                await _safe_reply(message, _error_text(exc))
+            elif callback is not None:
+                await callback.answer(_error_text(exc), show_alert=True)
+        except Exception:
+            pass
         raise
 
 
@@ -535,6 +572,9 @@ def main() -> None:
     bot = Bot(token=settings.telegram_bot_token)
     dp = Dispatcher()
     dp.include_router(router)
+    # Ловушка ошибок: отвечает пользователю и не даёт боту молчать при сбое хендлера
+    dp.message.outer_middleware(error_middleware)
+    dp.callback_query.outer_middleware(error_middleware)
 
     # Прокси-сессия для aiogram (SOCKS — через aiohttp-socks, extra aiogram[proxy]).
     # python_socks не понимает схему socks5h — нормализуем до socks5.

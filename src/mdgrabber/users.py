@@ -8,6 +8,7 @@
 """
 from __future__ import annotations
 
+import hashlib
 import logging
 import sqlite3
 from pathlib import Path
@@ -18,6 +19,13 @@ from .config import REPO_ROOT, Settings
 log = logging.getLogger(__name__)
 
 DB_PATH = REPO_ROOT / "data" / "bot.sqlite"
+
+
+def stable_uid(chat_id: str) -> int:
+    """Стабильный user_id из chat_id (blake2b, не randomised hash() Python —
+    тот меняется между процессами и рвал связи users ↔ subscriptions)."""
+    digest = hashlib.blake2b(str(chat_id).encode(), digest_size=8).digest()
+    return int.from_bytes(digest, "big") % (10 ** 12)
 
 
 def _connect() -> sqlite3.Connection:
@@ -76,8 +84,8 @@ def get_user(chat_id: str) -> Optional[dict]:
 
 
 def add_user(chat_id: str, is_admin: bool = False) -> int:
-    """Зарегистрировать пользователя. user_id = hash(chat_id)."""
-    uid = hash(chat_id) % (10 ** 12)
+    """Зарегистрировать пользователя. user_id = stable_uid(chat_id)."""
+    uid = stable_uid(chat_id)
     conn = _connect()
     try:
         conn.execute(
@@ -92,10 +100,13 @@ def add_user(chat_id: str, is_admin: bool = False) -> int:
 
 
 def list_subscribers(category: str = "market") -> list[str]:
-    """chat_id всех пользователей с подпиской на категорию.
+    """chat_id подписчиков на market-рассылку: все НЕ-админы.
 
-    category='market' → все активные пользователи (пока нет per-category в БД,
-    возвращаем всех). В будущем можно расширить через subscriptions.signal_type.
+    category пока игнорируется (per-category фильтров в БД нет).
+    Админ в список не входит — рассылка сигналов админу идёт через fallback
+    «(нет подписчиков)» в run_signals.broadcast. При появлении второго
+    пользователя решить: либо админ тоже подписчик (is_admin=0-фильтр убрать),
+    либо оставить как есть.
     """
     conn = _connect()
     try:

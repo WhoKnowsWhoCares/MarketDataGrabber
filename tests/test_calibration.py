@@ -240,5 +240,8 @@ def test_annotations_and_mark_sent_only_for_deliverable(monkeypatch):
     assert rc == 0
     annotated_types = {c.args[0]["signal_type"] for c in annotate.call_args_list}
     assert annotated_types == {"ma_cross_up"}
-    marked = mark_sent.call_args.args[1]
-    assert [s["signal_type"] for s in marked] == ["ma_cross_up"]
+    # mark_sent вызывается дважды: [deliverable], затем [отфильтрованные]
+    all_marked = [s for call in mark_sent.call_args_list for s in call.args[1]]
+    assert sorted(s["signal_type"] for s in all_marked) == [
+        "golden_cross", "ma_cross_up", "volume_spike",
+    ]

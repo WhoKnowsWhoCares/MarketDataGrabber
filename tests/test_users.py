@@ -12,6 +12,7 @@ from mdgrabber.users import (
     init_db,
     list_subscribers,
     remove_subscription,
+    stable_uid,
 )
 
 
@@ -75,6 +76,24 @@ def test_list_subscribers(db_dir):
     assert "200" not in subs  # админ исключён
 
 
+def test_stable_uid_across_processes(db_dir):
+    """user_id одинаков в разных процессах (раньше ломалось через randomised hash())."""
+    import subprocess
+    import sys
+
+    init_db()
+    uid_main = add_user("777")
+    code = (
+        "import sys; sys.path.insert(0, 'src');"
+        "from mdgrabber.users import stable_uid;"
+        "print(stable_uid('777'))"
+    )
+    out = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True
+    )
+    assert int(out.stdout.strip()) == uid_main
+
+
 def test_add_subscription(db_dir):
     init_db()
     add_user("123")
@@ -85,7 +104,7 @@ def test_add_subscription(db_dir):
     conn.row_factory = sqlite3.Row
     row = conn.execute(
         "SELECT instrument, signal_type FROM subscriptions WHERE user_id = ?",
-        (hash("123") % (10**12),),
+        (stable_uid("123"),),
     ).fetchone()
     assert row is not None
     assert row["instrument"] == "SBER"

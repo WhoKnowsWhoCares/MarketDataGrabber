@@ -5,32 +5,32 @@ from mdgrabber.ratelimit import allow
 
 
 def test_allow_with_redis():
-    """При рабочем Redis — INCR возвращает 1 → разрешаем."""
+    """При рабочем Redis ключ свободен (SET NX вернул True) → разрешаем."""
     mock_r = MagicMock()
-    mock_r.incr.return_value = 1
+    mock_r.set.return_value = True
 
     with patch("mdgrabber.ratelimit._redis_module") as mock_redis:
         mock_redis.from_url.return_value = mock_r
         result = allow("test_key", ttl_seconds=10, redis_url="redis://localhost:6379/0")
     assert result is True
-    mock_r.incr.assert_called_once_with("test_key")
-    mock_r.expire.assert_called_once_with("test_key", 10)
+    mock_r.set.assert_called_once_with("test_key", 1, ex=10, nx=True)
 
 
 def test_allow_redis_blocked():
-    """INCR > 1 → cooldown активен, но функция всё равно возвращает True."""
+    """Ключ уже стоит (SET NX вернул None) → cooldown активен, блокируем."""
     mock_r = MagicMock()
-    mock_r.incr.return_value = 2
+    mock_r.set.return_value = None
 
     with patch("mdgrabber.ratelimit._redis_module") as mock_redis:
         mock_redis.from_url.return_value = mock_r
         result = allow("test_key", ttl_seconds=10)
-    assert result is True
+    assert result is False
 
 
 def test_allow_redis_unavailable():
-    """Redis недоступен → возвращаем True и логируем warning."""
+    """Redis недоступен → возвращаем True и логируем warning (fail-open)."""
     with patch("mdgrabber.ratelimit._redis_module") as mock_redis:
-        mock_redis.from_url.side_effect = ConnectionError("refused")
+        mock_redis.from_url.return_value = mock_r = MagicMock()
+        mock_r.set.side_effect = ConnectionError("refused")
         result = allow("test_key", ttl_seconds=10)
     assert result is True
