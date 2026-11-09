@@ -108,5 +108,6 @@ Full phase spec (P0–P7): [`docs/SPEC.md`](docs/SPEC.md). Chart registry: [`doc
 
 ## Status
 
-- ✅ **P0–P4**: infrastructure, backfill, incremental+marts, digest+bot+dashboard, MCP, cron schedule, signals
-- ⬜ **P5** signal backtesting · **P6** semi-automatic execution + live streaming · **P7** web UI
+- ✅ **P0–P5**: infrastructure, backfill, incremental+marts, digest+bot+dashboard, MCP, cron schedule, signals (calibrated by 6-year backtest), signal backtesting
+- 🔶 **P6** semi-automatic execution — sandbox trade client, inline confirm buttons with Redis pending (TTL 60s), guardrails, hourly increment — done; live streaming remaining
+- ⬜ **P7** web UI

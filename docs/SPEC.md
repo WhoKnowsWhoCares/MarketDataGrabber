@@ -1,8 +1,8 @@
 ---
 tags: [project, market-data, trading, tinkoff]
 created: 2026-10-25
-updated: 2026-10-29
-status: in-progress (P0–P4 done)
+updated: 2026-11-09
+status: in-progress (P0–P5 done, P6 in progress)
 workspace: /opt/data/workspace/MarketData
 github: https://github.com/WhoKnowsWhoCares/MarketDataGrabber
 ---
@@ -10,7 +10,7 @@ github: https://github.com/WhoKnowsWhoCares/MarketDataGrabber
 
 Личная система сбора рыночных данных через T-Invest API (Т-Банк): накопление истории, аналитика, торговые сигналы и рекомендации пользователю с возможностью полуавтоматического исполнения.
 
-## Прогресс (2026-10-29)
+## Прогресс (2026-11-09)
 
 | Фаза | Статус | Ключевые артефакты |
 |---|---|---|
@@ -21,8 +21,8 @@ github: https://github.com/WhoKnowsWhoCares/MarketDataGrabber
 | P3.5 MCP | ✅ done (10-29) | FastMCP :8900, 5 read-only инструментов, mdg_ro, ключи (SHA256), mcp_audit |
 | P3.6 Расписание | ✅ done (10-29) | crontab 8 задач (МСК), всё через docker (host python3.12 сломан — `_asyncio` segfault) |
 | P4 Сигналы | ✅ done (10-29) | 7 типов детекции, дедуп 30 дней, доставка по подпискам, Grafana-аннотации; первый прогон: 5 сигналов доставлено; калибровка по бэктесту 10-29 |
-| P5 Бэктест | ⬜ | — |
-| P6 Полуавтомат + live | ⬜ | Redis pending-orders готов |
+| P5 Бэктест | ✅ done (10-31) | replay-движок (P5.1), статистика + Telegram-отчёт run_backtest.py (P5.2), калибровка сигналов по 6-летнему бэктесту (P4.3: доставляются ma_cross_up, death_cross, ma_cross_down, rsi_oversold) |
+| P6 Полуавтомат + live | 🔶 in progress | P6.1 sandbox-клиент trade.py + smoke_trade; P6.2 inline-исполнение с Redis-pending (TTL 60с) + guardrails (admin-only, sandbox-only, max lots); P6.3 hourly increment 10-19 МСК пн-сб + hourly run_marts; P6.3b watchdog по торговому календарю; P6.4 redis set(ex=60) + structlog торгового флоу. Осталось: live-стриминг MarketDataStream |
 | P7 Веб | ⬜ | — |
 
 Отклонения от спеки: scheduler-сервис (APScheduler) заменён на host-crontab + mdg-jobs контейнер; лoki/promtail отложены; broadcast сигналов доставляет все sent=0 (самовосстановление). Дашборд: дропдаун инструментов — тикеры (не uid), trading_day в таблице событий скрыт.
