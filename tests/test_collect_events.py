@@ -218,3 +218,19 @@ def test_collect_macro_merges_sources_and_survives_failure(tmp_path):
     assert ("macro:ru:cbr", date(2027, 2, 12)) in kinds
     assert ("macro:ru:rosstat", date(2026, 12, 11)) in kinds
     assert not any(uid == "macro:us:fomc" for uid, _ in kinds)  # FOMC упал — WARN, не crash
+    # время объявления в payload у ЦБ
+    cbr_payload = json.loads([r for r in rows if r[1] == "macro:ru:cbr"][0][-1])
+    assert cbr_payload["announce_time_msk"] == "13:30"
+    assert cbr_payload["press_conf_msk"] == "15:00"
+
+
+def test_fomc_announce_time_msk_dst_boundary():
+    """14:00 ET → 22:00 МСК зимой (EST), 21:00 летом (EDT); границы DST."""
+    assert ce.fomc_announce_msk(date(2026, 12, 9)) == "22:00"    # EST
+    assert ce.fomc_announce_msk(date(2027, 1, 27)) == "22:00"    # EST
+    assert ce.fomc_announce_msk(date(2027, 3, 17)) == "21:00"    # EDT (DST с 14.03.2027)
+    assert ce.fomc_announce_msk(date(2027, 6, 9)) == "21:00"     # EDT
+    assert ce.fomc_announce_msk(date(2027, 11, 3)) == "21:00"    # EDT (DST до 07.11.2027)
+    assert ce.fomc_announce_msk(date(2027, 11, 10)) == "22:00"   # EST после перехода
+    # первый день DST — заседание после перехода 2:00 local
+    assert ce.fomc_announce_msk(date(2027, 3, 14)) == "21:00"

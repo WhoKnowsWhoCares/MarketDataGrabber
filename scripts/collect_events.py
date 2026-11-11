@@ -284,6 +284,28 @@ MONTHS_RU = {m: n for n, m in enumerate(
     "января февраля марта апреля мая июня июля августа сентября октября ноября декабря".split(), 1)}
 MONTHS_EN = {m: n for n, m in enumerate(
     "January February March April May June July August September October November December".split(), 1)}
+# Время объявления решений, всё приводится к МСК (payload.announce_time_msk):
+CBR_PRESS_MSK = "13:30"      # пресс-релиз ЦБ — 13:30 МСК (страница календаря; МСК = UTC+3)
+CBR_PC_MSK = "15:00"         # пресс-конференция ЦБ
+FOMC_PRESS_ET = 14           # 14:00 по восточному времени США — постоянный регламент Fed
+# (на странице fed времени нет; ET зима UTC-5 / лето UTC-4, в США есть DST)
+
+
+def _us_eastern_is_dst(d: date) -> bool:
+    """DST в США: со второго воскресенья марта по первое воскресенье ноября
+    (границы в 2:00 ночи local — для дневных времён не критично)."""
+    def nth_sunday(y: int, month: int, n: int) -> date:
+        d1 = date(y, month, 1)
+        return d1 + timedelta(days=(6 - d1.weekday()) % 7 + 7 * (n - 1))
+
+    return nth_sunday(d.year, 3, 2) <= d < nth_sunday(d.year, 11, 1)
+
+
+def fomc_announce_msk(d: date) -> str:
+    """14:00 ET → МСК. Зимой (EST, UTC-5): 19:00 UTC → 22:00 МСК;
+    летом (EDT, UTC-4): 18:00 UTC → 21:00 МСК."""
+    utc_hour = FOMC_PRESS_ET + (4 if _us_eastern_is_dst(d) else 5)
+    return f"{utc_hour + 3:02d}:00"
 
 
 def parse_cbr_schedule(html: str, min_year: int, max_year: int) -> list[date]:
@@ -350,7 +372,8 @@ def collect_macro(settings=None, today: date | None = None) -> list[list]:
     try:
         html = _http_get(CBR_CAL_URL)
         for d in parse_cbr_schedule(html, min(years), max(years)):
-            payload = {"name": "Ключевая ставка ЦБ РФ", "region": "ru", "source": "cbr"}
+            payload = {"name": "Ключевая ставка ЦБ РФ", "region": "ru", "source": "cbr",
+                       "announce_time_msk": CBR_PRESS_MSK, "press_conf_msk": CBR_PC_MSK}
             rows.append(row("macro", "macro:ru:cbr", midnight(d), d, None, 3, payload))
     except Exception as e:  # noqa: BLE001 — макро не валит сбор остальных событий
         print(f"WARN: календарь ЦБ РФ недоступен: {e}")
@@ -359,7 +382,8 @@ def collect_macro(settings=None, today: date | None = None) -> list[list]:
         proxy = settings.telegram_proxy if settings else None
         html = _http_get(FOMC_URL, proxy=proxy)
         for d in parse_fomc_dates(html, years):
-            payload = {"name": "FOMC rate decision", "region": "us", "source": "fomc"}
+            payload = {"name": "FOMC rate decision", "region": "us", "source": "fomc",
+                       "announce_time_msk": fomc_announce_msk(d)}
             rows.append(row("macro", "macro:us:fomc", midnight(d), d, None, 3, payload))
     except Exception as e:  # noqa: BLE001
         print(f"WARN: календарь FOMC недоступен: {e}")
