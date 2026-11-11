@@ -13,16 +13,17 @@ expected_date = дата события; для прошедших отчёто�
 (дата отсечки = день гэпа на MOEX T+1), lastBuyDate — в payload.
 
 Календарь: окно today±60 дней, открытые И закрытые дни (is_open).
-Ограничение TradingSchedules проверено на живом API: from в прошлом →
-400, период длиннее 14 дней → 400, дефолт отдаёт ровно today..today+14,
-поэтому источники такие:
-  - today..today+14 — TradingSchedules площадки MOEX (isTradingDay);
-  - прошлое — фактические торговые дни из candles_1d (distinct bar_date),
-    остальные дни окна считаются закрытыми;
-  - будущее за пределами окна API — будни открыты, выходные закрыты
-    (красные дни на буднях в ближайшие 60 дней попадают в окно API).
-payload нормализован: {"date", "is_open", "exchange", "derived", "api"};
-is_open — snake_case для проверочных LIKE-запросов.
+Источники по приоритету (горизонт TradingSchedules проверен live —
+ровно today..today+13, дальше API не публикует; from в прошлом → 400):
+  1. today..today+13 — TradingSchedules площадки MOEX (isTradingDay);
+  2. прошлое — фактические торговые дни из candles_1d (distinct bar_date);
+  3. будущее за горизонтом API — производственный календарь РФ
+     (isdayoff.ru, без токена): правильно закрывает праздники, которые
+     weekday-эвристика ошибочно помечала открытыми (напр. 1–8 января);
+  4. будни открыты / выходные закрыты — fallback при недоступном isdayoff.
+payload нормализован: {"date", "is_open", "exchange", "derived", "source", "api"};
+is_open — snake_case для проверочных LIKE-запросов; source —
+tinvest|candles|isdayoff|weekday.
 
 Экспирации: даты с годом ≥ 2050 — placeholder API (CNYRUBF, IMOEXF отдают
 2099-12-31) и не записываются.
@@ -95,11 +96,50 @@ def row(event_type, uid, event_time, expected, actual, importance, payload) -> l
             json.dumps(payload, ensure_ascii=False)]
 
 
-def collect_calendar(ti: TInvestClient, ch, today: date) -> list[list]:
+def fetch_production_calendar(start: date, end: date, settings=None) -> dict[date, bool] | None:
+    """Производственный календарь РФ (isdayoff.ru) для будущего за горизонтом
+    T-Invest API. Возвращает {date: is_open} или None, если сервис недоступен
+    (тогда caller падает на weekday-эвристику).
+
+    Коды isdayoff: 0 — рабочий, 1 — нерабочий, 2 — сокращённый (рабочий),
+    3 — нерабочий (перенос), 4 — рабочий (перенос с выходного)."""
+    import httpx
+
+    verify = settings.tls_verify if settings else True
+    years = range(start.year, end.year + 1)
+    out: dict[date, bool] = {}
+    try:
+        with httpx.Client(timeout=15.0, verify=verify) as http:
+            for y in years:
+                r = http.get(f"https://isdayoff.ru/api/getdata?year={y}")
+                r.raise_for_status()
+                codes = r.text.strip()
+                if len(codes) != (366 if _is_leap(y) else 365):
+                    raise ValueError(f"isdayoff: неожиданная длина за {y}: {len(codes)}")
+                for i, code in enumerate(codes):
+                    d = date(y, 1, 1) + timedelta(days=i)
+                    out[d] = code in "024"
+    except Exception as e:  # noqa: BLE001 — календарь опционален, есть эвристика
+        print(f"WARN: производственный календарь недоступен ({e})")
+        return None
+    return out
+
+
+def _is_leap(y: int) -> bool:
+    return y % 4 == 0 and (y % 100 != 0 or y % 400 == 0)
+
+
+def collect_calendar(ti: TInvestClient, ch, today: date, settings=None) -> list[list]:
     """trading_day: один ряд на календарный день в окне today±60 — открытые
-    И закрытые (payload.is_open true/false). См. docstring модуля про
-    источники: API даёт только today..today+14, прошлое — из candles_1d,
-    будущее за пределами API — будни/выходные."""
+    И закрытые (payload.is_open true/false). Приоритет источников:
+      1. TradingSchedules (T-Invest) — today..today+13, авторитетно
+         (знает субботние сессии); горизонт API проверить live: дальше не отдаёт;
+      2. candles_1d — прошлое, фактические торговые дни;
+      3. производственный календарь (isdayoff.ru) — будущее за горизонтом API
+         (правильно закрывает праздники: новогодние каникулы и т.п.);
+      4. будни открыты / выходные закрыты — fallback, если isdayoff недоступен.
+    payload.source фиксирует, откуда взят день: tinvest|candles|isdayoff|weekday.
+    """
     api_days: dict[date, dict] = {}
     for e in ti.get_trading_schedules():
         if e.get("exchange") == EXCHANGE:
@@ -115,6 +155,7 @@ def collect_calendar(ti: TInvestClient, ch, today: date) -> list[list]:
             f"WHERE bar_date >= '{start}' AND bar_date <= '{end}'"
         ).result_rows
     }
+    prod_cal = fetch_production_calendar(start, end, settings)
     rows: list[list] = []
     for i in range((end - start).days + 1):
         d = start + timedelta(days=i)
@@ -122,11 +163,22 @@ def collect_calendar(ti: TInvestClient, ch, today: date) -> list[list]:
         if day is not None:
             is_open = bool(day.get("isTradingDay"))
             derived = False
-        else:
-            is_open = (d in open_past) if d <= today else (d.weekday() < 5)
+            source = "tinvest"
+        elif d <= today:
+            is_open = d in open_past
             derived = True
+            source = "candles"
+        elif prod_cal is not None and d in prod_cal:
+            is_open = prod_cal[d]
+            derived = True
+            source = "isdayoff"
+        else:
+            is_open = d.weekday() < 5
+            derived = True
+            source = "weekday"
         payload = {"date": d.isoformat(), "is_open": is_open,
-                   "exchange": EXCHANGE, "derived": derived, "api": day}
+                   "exchange": EXCHANGE, "derived": derived, "source": source,
+                   "api": day}
         rows.append(row("trading_day", None, midnight(d), d, None, 0, payload))
     return rows
 
@@ -245,7 +297,7 @@ def main() -> int:
 
     errors = 0
     try:
-        cal = collect_calendar(ti, ch, today)
+        cal = collect_calendar(ti, ch, today, settings)
         divs = collect_dividends(ti, inv, now)
         exps = collect_expiries(ti, inv)
         reps = collect_reports(ti, inv, today)
