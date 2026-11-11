@@ -25,7 +25,7 @@ github: https://github.com/WhoKnowsWhoCares/MarketDataGrabber
 | P6 Полуавтомат + live | 🔶 in progress | P6.1 sandbox-клиент trade.py + smoke_trade; P6.2 inline-исполнение с Redis-pending (TTL 60с) + guardrails (admin-only, sandbox-only, max lots); P6.3 hourly increment 10-19 МСК пн-сб + hourly run_marts; P6.3b watchdog по торговому календарю; P6.4 redis set(ex=60) + structlog торгового флоу. Осталось: live-стриминг MarketDataStream |
 | P7 Веб | ⬜ | — |
 
-Отклонения от спеки: scheduler-сервис (APScheduler) заменён на host-crontab + mdg-jobs контейнер; лoki/promtail отложены; broadcast сигналов доставляет все sent=0 (самовосстановление). Дашборд: дропдаун инструментов — тикеры (не uid), trading_day в таблице событий скрыт.
+Отклонения от спеки: scheduler-сервис (APScheduler) заменён на host-crontab + mdg-jobs контейнер; лoki/promtail отложены; broadcast сигналов доставляет все sent=0 (самовосстановление). Дашборд: дропдаун инструментов — тикеры (не uid), trading_day в таблице событий скрыт. Календарь trading_day: горизонт TradingSchedules = ровно today..today+13; будущее за горизонтом — производственный календарь РФ (isdayoff.ru), прошедшее — фактические дни из candles_1d (scripts/collect_events.py). GetAssetReports отдаёт только прошедшие факты — будущих дат отчётов в events нет (проверено live 2026-11).
 
 ## Problem Statement
 
@@ -262,7 +262,7 @@ profile live (P6):
 - ~~Какой агрегатор для макрокалендаря~~ — решить при реализации P4
 - Gap-детектор требует календарь сессий (P2, `TradingSchedules`): сейчас ложные срабатывания на праздники и даты до листинга (IBZ6)
 - Поквартальные цифры отчётности (выручка/прибыль за период): пока не нужны — живём на TTM из снапшотов; если понадобятся, источник — MOEX ISS
-- Есть ли в `GetAssetReports` будущие даты (расписание) или только прошедшие факты — проверить на P2
+- ~~Есть ли в `GetAssetReports` будущие даты (расписание) или только прошедшие факты~~ — **проверено live 2026-11: только прошедшие факты** (0 будущих дат); расписание отчётностей нужен внешний источник
 
 ## Связанное
 
