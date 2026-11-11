@@ -6,6 +6,8 @@ services:
     environment:
       CLICKHOUSE_USER: ${CLICKHOUSE_USER}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      # Право создавать пользователей (нужно db/apply_ro_user.sh для mdg_ro)
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
       TZ: ${TZ:-Europe/Moscow}
     ports:
       # Внутренний сервис (БД): только docker-подсеть, НЕ публичный
