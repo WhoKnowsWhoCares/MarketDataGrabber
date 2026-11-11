@@ -28,12 +28,20 @@ tinvest|candles|isdayoff|weekday.
 Экспирации: даты с годом ≥ 2050 — placeholder API (CNYRUBF, IMOEXF отдают
 2099-12-31) и не записываются.
 
+Макро (event_type='macro', instrument_uid='macro:<region>:<source>'):
+решения по ключевой ставке ЦБ РФ (cbr.ru, всё расписание 2014–2027+ на
+одной странице) и FOMC (federalreserve.gov, из РФ только через SOCKS-прокси
+из TELEGRAM_PROXY). Агрегаторы не используются: investing.com — жёсткий
+Cloudflare (проверено 2026-11). Росстат — через config/macro_manual.json
+(ручной конфиг, официальный fallback из SPEC: сайт недоступен из сети).
+
 Использование:
     set -a; source .env; set +a; .venv/bin/python scripts/collect_events.py
 """
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 import time
@@ -266,6 +274,111 @@ def collect_expiries(ti: TInvestClient, inv: dict) -> list[list]:
     return rows
 
 
+# --- Макрокалендарь (macro) ------------------------------------------------
+# Первоисточники вместо агрегаторов (investing.com — жёсткий Cloudflare,
+# проверено 2026-11: 403 на HTML и API, CF-челлендж не пропускает браузер).
+CBR_CAL_URL = "https://www.cbr.ru/dkp/cal_mp/"          # решения по ключевой ставке
+FOMC_URL = "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"  # из РФ — только через прокси
+MACRO_MANUAL = ROOT / "config" / "macro_manual.json"    # ручной конфиг (Росстат и пр.)
+MONTHS_RU = {m: n for n, m in enumerate(
+    "января февраля марта апреля мая июня июля августа сентября октября ноября декабря".split(), 1)}
+MONTHS_EN = {m: n for n, m in enumerate(
+    "January February March April May June July August September October November December".split(), 1)}
+
+
+def parse_cbr_schedule(html: str, min_year: int, max_year: int) -> list[date]:
+    """Даты заседаний Совета директоров ЦБ по ключевой ставке с календаря
+    (все годы в одной странице). Регулярные заседания СД без ставки отфильтрованы
+    по заголовку «Заседание … по ключевой ставке»."""
+    plain = re.sub(r"<script[^>]*>.*?</script>", " ", html, flags=re.S)
+    plain = re.sub(r"<[^>]+>", " ", plain)
+    plain = plain.replace("&nbsp;", " ").replace("&mdash;", "—")
+    plain = re.sub(r"\s+", " ", plain)
+    month_re = "|".join(MONTHS_RU)
+    date_pat = rf"(\d{{1,2}})\s+({month_re})\s+(\d{{4}})"
+    hits = list(re.finditer(date_pat, plain))
+    out: set[date] = set()
+    for i, m in enumerate(hits):
+        end = hits[i + 1].start() if i + 1 < len(hits) else len(plain)
+        seg = plain[m.end():end]
+        if "Заседание" in seg and "ключев" in seg:
+            y = int(m.group(3))
+            if min_year <= y <= max_year:
+                out.add(date(y, MONTHS_RU[m.group(2)], int(m.group(1))))
+    return sorted(out)
+
+
+def parse_fomc_dates(html: str, years: set[int]) -> list[date]:
+    """Даты решений FOMC (второй день заседания) со страницы fed.
+    Годовые панели <a id=…>YYYY FOMC Meetings</a>; строки чередуются
+    fomc-meeting / fomc-meeting--shaded; даты могут быть с '*' (tentative)."""
+    plain = html.replace("&nbsp;", " ")
+    panels = re.split(r'<a id="\d+">(\d{4}) FOMC Meetings</a>', plain)
+    out: set[date] = set()
+    for i in range(1, len(panels), 2):
+        y = int(panels[i])
+        if y not in years:
+            continue
+        seg = panels[i + 1].split('<div class="panel panel-default">')[0]
+        for block in re.split(r'<div class="[^"]*row fomc-meeting"', seg)[1:]:
+            m = re.search(r"<strong>([A-Z][a-z]+)</strong>", block)
+            d = re.search(r"fomc-meeting__date[^>]*>\s*(\d{1,2})(?:-(\d{1,2}))?", block)
+            if m and d and m.group(1) in MONTHS_EN:
+                day = int(d.group(2) or d.group(1))  # второй день = день решения
+                out.add(date(y, MONTHS_EN[m.group(1)], day))
+    return sorted(out)
+
+
+def _http_get(url: str, proxy: str | None = None, verify: bool = False) -> str:
+    import httpx
+
+    with httpx.Client(timeout=30.0, verify=verify, proxy=proxy) as http:
+        r = http.get(url, headers={"User-Agent": "Mozilla/5.0 Chrome/126"})
+        r.raise_for_status()
+        return r.text
+
+
+def collect_macro(settings=None, today: date | None = None) -> list[list]:
+    """macro: решения по ставкам ЦБ РФ и FOMC (будущие годы = расписание,
+    прошедшие = факты). Источники независимы: один упал — остальные собираются.
+    Росстат и прочее — через config/macro_manual.json (расписание сайта
+    недоступно из сети; официальный fallback из SPEC — ручной конфиг)."""
+    today = today or date.today()
+    years = {today.year, today.year + 1}
+    rows: list[list] = []
+
+    try:
+        html = _http_get(CBR_CAL_URL)
+        for d in parse_cbr_schedule(html, min(years), max(years)):
+            payload = {"name": "Ключевая ставка ЦБ РФ", "region": "ru", "source": "cbr"}
+            rows.append(row("macro", "macro:ru:cbr", midnight(d), d, None, 3, payload))
+    except Exception as e:  # noqa: BLE001 — макро не валит сбор остальных событий
+        print(f"WARN: календарь ЦБ РФ недоступен: {e}")
+
+    try:
+        proxy = settings.telegram_proxy if settings else None
+        html = _http_get(FOMC_URL, proxy=proxy)
+        for d in parse_fomc_dates(html, years):
+            payload = {"name": "FOMC rate decision", "region": "us", "source": "fomc"}
+            rows.append(row("macro", "macro:us:fomc", midnight(d), d, None, 3, payload))
+    except Exception as e:  # noqa: BLE001
+        print(f"WARN: календарь FOMC недоступен: {e}")
+
+    if MACRO_MANUAL.exists():
+        try:
+            entries = json.loads(MACRO_MANUAL.read_text(encoding="utf-8"))
+            for e in entries:
+                d = date.fromisoformat(e["date"])
+                payload = {"name": e["name"], "region": e.get("region", ""),
+                           "source": e.get("source", "manual")}
+                rows.append(row("macro", f"macro:{payload['region']}:{payload['source']}",
+                                midnight(d), d, None, int(e.get("importance", 2)), payload))
+        except Exception as e:  # noqa: BLE001
+            print(f"WARN: macro_manual.json не разобран: {e}")
+
+    return rows
+
+
 def collect_reports(ti: TInvestClient, inv: dict, today: date) -> list[list]:
     rows = []
     for ticker, info in inv.items():
@@ -301,7 +414,7 @@ def main() -> int:
         divs = collect_dividends(ti, inv, now)
         exps = collect_expiries(ti, inv)
         reps = collect_reports(ti, inv, today)
-        rows = cal + divs + exps + reps
+        rows = cal + divs + exps + reps + collect_macro(settings, today)
 
         counts: dict[str, int] = {}
         for r in rows:

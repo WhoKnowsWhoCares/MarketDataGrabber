@@ -161,3 +161,60 @@ def test_fetch_production_calendar_parses_codes():
 def test_fetch_production_calendar_unavailable_returns_none():
     with mock.patch("httpx.Client", side_effect=Exception("boom")):
         assert ce.fetch_production_calendar(date(2027, 1, 1), date(2027, 2, 1)) is None
+
+
+# --- macro -------------------------------------------------------------------
+
+CBR_FIXTURE = """<html><body>
+<div>2027 год 2026 год</div>
+<div>12 февраля 2027 года</div>
+<div>Заседание Совета директоров Банка России по ключевой ставке</div>
+<div>Пресс-релиз по ключевой ставке</div>
+<div>19 марта 2027 года</div>
+<div>Заседание Совета директоров Банка России</div>
+<div>26 марта 2027 года</div>
+<div>Заседание Совета директоров Банка России по&nbsp;ключевой ставке</div>
+<div>10 февраля 2024 года</div>
+<div>Заседание Совета директоров Банка России по ключевой ставке</div>
+</body></html>"""
+
+
+def test_parse_cbr_schedule_filters_by_title_and_year():
+    """Только заседания «по ключевой ставке»; обычные СД и чужие годы — мимо."""
+    out = ce.parse_cbr_schedule(CBR_FIXTURE, 2026, 2027)
+    assert out == [date(2027, 2, 12), date(2027, 3, 26)]
+
+
+def test_parse_fomc_dates_shaded_and_tentative():
+    """Чередование fomc-meeting/--shaded и '*' после tentative-дат."""
+    html = """
+    <a id="42">2027 FOMC Meetings</a>
+    <div class="row fomc-meeting" ">
+      <div class="fomc-meeting__month ..."><strong>January</strong></div>
+      <div class="fomc-meeting__date ...">26-27</div>
+    </div>
+    <div class="fomc-meeting--shaded row fomc-meeting" ">
+      <div class="fomc-meeting--shaded fomc-meeting__month ..."><strong>March</strong></div>
+      <div class="fomc-meeting__date ...">16-17*</div>
+    </div>
+    <div class="panel panel-default"><a id="43">2028 FOMC Meetings</a></div>
+    """
+    out = ce.parse_fomc_dates(html, {2027})
+    assert out == [date(2027, 1, 27), date(2027, 3, 17)]  # второй день = решение
+
+
+def test_collect_macro_merges_sources_and_survives_failure(tmp_path):
+    """Источники независимы: упавший FOMC не роняет ЦБ; manual.json читается."""
+    today = date(2026, 11, 11)
+    manual = tmp_path / "macro_manual.json"
+    manual.write_text(
+        '[{"name": "ИПЦ Росстата", "date": "2026-12-11", "region": "ru", "source": "rosstat"}]',
+        encoding="utf-8",
+    )
+    with mock.patch.object(ce, "_http_get", side_effect=[CBR_FIXTURE, Exception("cf blocked")]), \
+         mock.patch.object(ce, "MACRO_MANUAL", manual):
+        rows = ce.collect_macro(settings=None, today=today)
+    kinds = [(r[1], r[3]) for r in rows]
+    assert ("macro:ru:cbr", date(2027, 2, 12)) in kinds
+    assert ("macro:ru:rosstat", date(2026, 12, 11)) in kinds
+    assert not any(uid == "macro:us:fomc" for uid, _ in kinds)  # FOMC упал — WARN, не crash
