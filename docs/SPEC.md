@@ -88,6 +88,7 @@ github: https://github.com/WhoKnowsWhoCares/MarketDataGrabber
 | T-Invest `TradingSchedules` | сессии, праздники, режимы | еженедельно + проверка ежедневно |
 | T-Invest инструменты | `expiration_date` фьючерсов | при появлении новой серии |
 | **Внешний агрегатор** (Investing.com / Finam — источник зафиксировать при реализации) | макрокалендарь: ставка ЦБ, Росстат (ИПЦ/ВВП), FOMC, CPI и пр. | **скрейпинг раз в неделю по выходным**; схема event-таблицы source-агностична, чтобы источник можно было заменить |
+| **RBC** (планируемый) — `https://rssexport.rbc.ru/rbcnews/news/30/full.rss` | рыночные новости: корпоративные события, регуляторика, индексы (пример: исключение Strategy/MSTR из MSCI 2026-11) | RSS-поллинг (collector новостей → `event_type='news'`); RSS жив, проверено 2026-11-12 (30 свежих айтемов). Остальные ленты RBC (`static.feed.rbc.ru`, `yandex_top.xml`) мертвы — использовать только `rssexport.rbc.ru` |
 
 ## Фундаментальный слой (решено)
 
