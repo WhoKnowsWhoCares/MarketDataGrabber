@@ -4,9 +4,36 @@
 -- просто вставляем свежие данные для окна, повторный запуск безопасен.
 -- ============================================================
 
+CREATE DATABASE IF NOT EXISTS market_data_gold;
+
+CREATE TABLE IF NOT EXISTS market_data_gold.mart_daily_metrics
+(
+    instrument_uid LowCardinality(String),
+    bar_date       Date,
+    close          Float64,
+    ret_1d         Nullable(Float64),
+    ret_5d         Nullable(Float64),
+    ret_20d        Nullable(Float64),
+    volume         UInt64,
+    volume_ma20    Nullable(Float64),
+    volume_ratio   Nullable(Float64),
+    atr14          Nullable(Float64),
+    range_pct      Nullable(Float64),
+    gap_pct        Nullable(Float64),
+    ma20           Nullable(Float64),
+    ma50           Nullable(Float64),
+    rsi14          Nullable(Float64),
+    computed_at    DateTime('UTC') DEFAULT now()
+)
+ENGINE = ReplacingMergeTree(computed_at)
+PARTITION BY toYYYYMM(bar_date)
+ORDER BY (instrument_uid, bar_date);
+
 -- Вставка пересчитанных метрик за последние ~600 календарных дней
 -- (покрывает 400 торговых дней с запасом)
 INSERT INTO market_data_gold.mart_daily_metrics
+    (instrument_uid, bar_date, close, ret_1d, ret_5d, ret_20d, volume,
+     volume_ma20, volume_ratio, atr14, range_pct, gap_pct, ma20, ma50, rsi14)
 WITH
     -- База: дневные свечи FINAL с окном 600 дней назад от максимума
     base AS (
